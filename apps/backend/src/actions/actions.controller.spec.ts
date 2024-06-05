@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { ActionSchema } from '@waalaxy/contract';
 
 import { database } from '../database';
+import { errorHandler } from '../errors';
 import { auth } from '../auth';
 import { uuid } from '../utils';
 import actionsController from './actions.controller';
@@ -26,6 +27,7 @@ describe('Actions Controller', () => {
     app.use(express.json());
     app.use(auth);
     app.use('/actions', actionsController);
+    app.use(errorHandler);
 
     // Create actions for a user
     database.reset();
@@ -51,6 +53,6 @@ describe('Actions Controller', () => {
 
   it('POST /actions should throw if invalid body', async () => {
     const response = await client(app).post('/actions').set('Authorization', `Bearer ${USER_ID}`).send({ name: 'XX' });
-    expect(response.status === 201).toBe(false);
+    expect(response.status).toBe(400);
   });
 });
