@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { ActionSchema, type Action } from '@waalaxy/contract';
+import { ActionSchema } from '@waalaxy/contract';
 
 import { env } from '../env';
+import { useQuery } from 'react-query';
 
 async function getUserActions(userId: string) {
   return fetch(`${env.VITE_API_URL}/actions`, {
@@ -17,15 +17,5 @@ async function getUserActions(userId: string) {
 }
 
 export function useActions(userId: string) {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Action[] | null>(null);
-
-  useEffect(() => {
-    getUserActions(userId)
-      .then((actions) => setData(actions))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [userId]);
-
-  return { loading, data };
+  return useQuery(['actions', userId], () => getUserActions(userId));
 }

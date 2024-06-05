@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { type ActionName, ActionNameSchema, CreditSchema, type Credit } from '@waalaxy/contract';
+import { useQuery } from 'react-query';
+import { ActionNameSchema, CreditSchema } from '@waalaxy/contract';
 
 import { env } from '../env';
 
@@ -17,15 +17,5 @@ async function getUserCredits(userId: string) {
 }
 
 export function useCredits(userId: string) {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Partial<Record<ActionName, Credit>> | null>(null);
-
-  useEffect(() => {
-    getUserCredits(userId)
-      .then((credits) => setData(credits))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [userId]);
-
-  return { loading, data };
+  return useQuery(['credits', userId], () => getUserCredits(userId));
 }
