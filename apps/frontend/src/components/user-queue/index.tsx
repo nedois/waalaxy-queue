@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 
+import { useCredits } from '../../services';
 import { useCountdown } from '../../hooks/use-countdown';
 import { Timer } from './timer';
 import { Flex } from '../flex';
@@ -30,6 +31,7 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
+  const { data: credits } = useCredits();
   const [pendingActions, setPendingActions] = useState<string[]>([]);
   const [finishedActions] = useState<string[]>([]);
   const { remainingTime, startCountdown } = useCountdown({ startTime: 5 });
@@ -42,6 +44,8 @@ export function UserQueue({ userId }: UserQueueProps) {
     }
   };
 
+  console.log({ credits });
+
   return (
     <Root>
       <Flex grow>
@@ -50,7 +54,7 @@ export function UserQueue({ userId }: UserQueueProps) {
       </Flex>
 
       <Flex gap={18} center>
-        <ActionButton credit={0} onClick={() => handleAddAction('A')}>
+        <ActionButton credit={credits?.['A']} onClick={() => handleAddAction('A')}>
           Action A
         </ActionButton>
         <ActionButton credit={0} onClick={() => handleAddAction('B')}>

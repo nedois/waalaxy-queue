@@ -4,8 +4,8 @@ import { ActionSchema, type Action } from '@waalaxy/contract';
 
 import { env } from '../env';
 
-function getUserActions(userId: string) {
-  return fetch(`${env.API_URL}/actions`, {
+async function getUserActions(userId: string) {
+  return fetch(`${env.VITE_API_URL}/actions`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

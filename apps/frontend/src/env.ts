@@ -2,6 +2,6 @@ import { z } from 'zod';
 
 export const env = z
   .object({
-    API_URL: z.string().url(),
+    VITE_API_URL: z.string().url(),
   })
-  .parse(process.env);
+  .parse(import.meta.env);
