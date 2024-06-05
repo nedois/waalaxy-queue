@@ -8,12 +8,13 @@ import { database } from '../database';
  */
 export const auth = async (request: Request, response: Response, next: NextFunction) => {
   const { authorization } = request.headers;
+  const { token } = request.query;
 
-  if (!authorization?.startsWith('Bearer ')) {
+  if ((authorization && !authorization.startsWith('Bearer ')) ?? typeof token !== 'string') {
     return response.status(401).send({ message: 'Unauthorized' });
   }
 
-  request.userId = authorization.substring(7).trim();
+  request.userId = authorization?.substring(7).trim() ?? token;
 
   // Register the user if it does not exist
   database.registerUser(request.userId);

@@ -3,7 +3,7 @@ import { ActionSchema, CreateActionDtoSchema } from '@waalaxy/contract';
 
 import { database } from '../database';
 import { uuid } from '../utils';
-import { Worker } from './actions.worker';
+import { Worker, WorkerEventHandler } from './actions.worker';
 
 const router = express.Router();
 
@@ -31,6 +31,29 @@ router.post('/', async (request, response) => {
   worker.process(request.userId, 'ACTION:CREATED');
 
   response.status(201).send(action);
+});
+
+router.get('/subscribe', (request, response) => {
+  response.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+
+  const notificationHandler: WorkerEventHandler = (message: any) => {
+    if (message.userId === request.userId) {
+      response.write(`data: ${JSON.stringify(message.data)}\n\n`);
+    }
+  };
+
+  worker.subscribe(notificationHandler);
+
+  request.on('close', () => {
+    worker.unsubscribe(notificationHandler);
+    response.end();
+  });
 });
 
 export default router;

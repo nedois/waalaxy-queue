@@ -5,8 +5,7 @@ import { Timer } from './timer';
 import { Flex } from '../flex';
 import { ActionButtons } from './action-buttons';
 import { QueueContent } from './queue-content';
-import { useAccount } from '../../services';
-import { timeDifferenceInSeconds } from '../../utils';
+import { useSubscribeToActions } from '../../services';
 
 const Root = styled.div`
   display: flex;
@@ -31,13 +30,11 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
-  const { data: user } = useAccount(userId);
+  const { remainingTime, resetCountdown } = useCountdown({ startTime: 14, status: 'running' });
 
-  const startTime = timeDifferenceInSeconds(user?.lastActionExecutedAt ?? new Date(), new Date());
-
-  const { remainingTime } = useCountdown({ startTime, status: 'running' });
-
-  console.log(startTime);
+  useSubscribeToActions(userId, {
+    onRunningAction: resetCountdown,
+  });
 
   return (
     <Root>

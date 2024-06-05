@@ -44,7 +44,6 @@ class ActionsProcessor {
 
     await database.updateActionStatus(userId, action.id, 'COMPLETED');
     await database.reduceUserCredit(userId, action, 1);
-    await database.updatedUser(userId, { locked: false, lastActionExecutedAt: new Date() });
 
     this.emit(userId, { actionId: action.id, type: 'ACTION:COMPLETED' });
   }
@@ -88,11 +87,12 @@ setInterval(async () => {
       ? timeDifferenceInMilliseconds(user.lastActionExecutedAt, new Date())
       : Infinity;
 
-    const shouldProcessActions = actionTimeElapsed > env.QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS;
+    const shouldProcessActions = actionTimeElapsed > env.QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS && !user.locked;
 
     if (shouldProcessActions) {
       await database.updatedUser(user.id, { locked: true });
-      processor.process(user.id);
+      await processor.process(user.id);
+      await database.updatedUser(user.id, { locked: false, lastActionExecutedAt: new Date() });
     }
   });
 }, env.WORKER_TICK_INTERVAL_IN_MS);

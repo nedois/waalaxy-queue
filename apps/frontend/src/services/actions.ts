@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { useEffect } from 'react';
 import { ActionSchema, type CreateActionDto } from '@waalaxy/contract';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 
@@ -39,7 +40,33 @@ export function useAddAction(userId: string) {
   return useMutation((data: CreateActionDto) => addUserAction(userId, data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['actions', userId]);
-      queryClient.invalidateQueries(['account', userId]);
     },
   });
+}
+
+interface UseSubscribeToActionsOptions {
+  onRunningAction?: () => void;
+}
+
+export function useSubscribeToActions(userId: string, options?: UseSubscribeToActionsOptions) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const eventSource = new EventSource(`${env.VITE_API_URL}/actions/subscribe?token=${userId}`);
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      queryClient.refetchQueries(['actions', userId]);
+      queryClient.refetchQueries(['credits', userId]);
+
+      if (data.type === 'ACTION:RUNNING') {
+        options?.onRunningAction?.();
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [userId]);
 }
