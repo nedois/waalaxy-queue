@@ -1,16 +1,17 @@
 import { StrictMode } from 'react';
-import * as ReactDOM from 'react-dom/client';
-import styled from 'styled-components';
+import ReactDOM from 'react-dom/client';
+import { ThemeProvider } from 'styled-components';
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') ?? document.body
-);
+import { theme, GlobalStyle } from './theme';
+import { App } from './app';
 
-// @INFO: styled-components is installed, you can use it if you want ;)
-const Container = styled.div``;
+const root = ReactDOM.createRoot(document.getElementById('root') ?? document.body);
 
 root.render(
   <StrictMode>
-    <Container>Good luck !</Container>
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
+      <App />
+    </ThemeProvider>
   </StrictMode>
 );
