@@ -1,6 +1,7 @@
 import { Action, ActionName, ActionStatus, Credit, User } from '@waalaxy/contract';
 
 export interface Database {
+  getUser(userId: string): Promise<User | null> | User | null;
   registerUser(userId: string): Promise<User> | User;
   updatedUser(userId: string, data: Partial<User>): Promise<User> | User;
   addUserToHotList(userId: string): Promise<void> | void;

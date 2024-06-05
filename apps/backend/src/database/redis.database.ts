@@ -57,13 +57,17 @@ export class RedisDatabase implements Database {
     return `credits:${userId}`;
   }
 
+  private getUserKey(userId: string) {
+    return `user:${userId}`;
+  }
+
   private getHotUsersKey() {
     return 'hot-users';
   }
 
-  private async getUser(userId: string) {
+  async getUser(userId: string) {
     return this.redis
-      .get(`user:${userId}`)
+      .get(this.getUserKey(userId))
       .then((data) => (data ? JSON.parse(data) : null))
       .then((data) => UserSchema.nullable().parse(data));
   }

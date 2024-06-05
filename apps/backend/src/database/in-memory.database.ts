@@ -14,6 +14,10 @@ export class InMemoryDatabase implements Database {
   /** Store users info */
   private readonly users = new Map<string, User>();
 
+  getUser(userId: string): User | null {
+    return this.users.get(userId) ?? null;
+  }
+
   getUserActions(userId: string): Action[] {
     return this.actions.get(userId) ?? [];
   }
