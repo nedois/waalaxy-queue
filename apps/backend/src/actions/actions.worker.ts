@@ -2,14 +2,16 @@ import { join } from 'node:path';
 import { Worker as NodeWorker, type WorkerOptions as NodeWorkerOptions } from 'node:worker_threads';
 
 import { ActionEvent } from './action.events';
-import { type Database, database } from '../database';
+import { database } from '../database/database-instance';
+import { type Database } from '../database/types';
+import { env } from '../env';
 
 export type BaseWorkerMessage = { actionId: string; type: ActionEvent; context: WorkerContext };
 
 export type WorkerEventHandler = <T extends BaseWorkerMessage>(data: T) => void;
 
 export interface WorkerContext {
-  database: Database;
+  database: Database | null;
 }
 
 export interface WorkerPostMessage {
@@ -49,6 +51,7 @@ export class Worker extends NodeWorker {
     });
 
     super.on('error', (error) => {
+      console.log('Worker error:', error);
       onError?.(error);
       super.terminate();
     });
@@ -60,7 +63,13 @@ export class Worker extends NodeWorker {
   }
 
   process(userId: string, event: ActionEvent) {
-    super.postMessage({ userId, event, context: { database } });
+    super.postMessage({
+      userId,
+      event,
+      context: {
+        database: env.DB_TYPE === 'memory' ? database : null,
+      },
+    });
   }
 
   subscribe(handler: WorkerEventHandler) {

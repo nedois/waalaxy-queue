@@ -1,8 +1,7 @@
 import assert from 'node:assert';
-import { Credit, Action, ActionStatus } from '@waalaxy/contract';
+import { Credit, Action, ActionStatus, User, ActionName } from '@waalaxy/contract';
 
-import type { Database, User } from './types';
-import { Worker } from '../actions/actions.worker';
+import type { Database } from './types';
 import { actionInstances } from '../actions/actions.handlers';
 
 export class InMemoryDatabase implements Database {
@@ -35,21 +34,13 @@ export class InMemoryDatabase implements Database {
     return action;
   }
 
-  getUserActionsCredits(userId: string): Record<string, Credit> {
-    let userCredits = this.credits.get(userId);
-
-    if (!userCredits) {
-      // Walkaround: Add default credits to the user, normally done in sign up process
-      userCredits = {};
-      Object.entries(actionInstances).forEach(([actionName, action]) => {
-        userCredits![actionName] = { amount: action.generateNewCredit() };
-      });
-    }
-
+  getUserCredits(userId: string): Record<string, Credit> {
+    const userCredits = this.credits.get(userId);
+    assert(userCredits, `User ${userId} has no credits`);
     return userCredits;
   }
 
-  renewUserActionsCredit(userId: string, credits: Record<string, Credit>): Record<string, Credit> {
+  saveUserCredits(userId: string, credits: Record<string, Credit>): Record<string, Credit> {
     const userCredits = this.credits.get(userId);
     assert(userCredits, `User ${userId} has no credits`);
 
@@ -72,6 +63,13 @@ export class InMemoryDatabase implements Database {
     const user = { id: userId, lastActionExecutedAt: null, locked: false };
     this.users.set(userId, user);
 
+    const userCredits = Object.entries(actionInstances).reduce((credits, [actionName, action]) => {
+      credits[actionName] = { amount: action.generateNewCredit() };
+      return credits;
+    }, {} as Record<ActionName, Credit>);
+
+    this.credits.set(userId, userCredits);
+
     return user;
   }
 
@@ -85,12 +83,12 @@ export class InMemoryDatabase implements Database {
     return user;
   }
 
-  updateActionStatus(actionId: string, status: ActionStatus): Action {
+  updateActionStatus(userId: string, actionId: string, status: ActionStatus): Action {
     let foundedUserId = '';
 
-    const actionIndex = Array.from(this.actions.entries())
+    const actionIndex = Array.from(this.actions.values())
       .flat(0)
-      .findIndex(([userId, actions]) => {
+      .findIndex((actions) => {
         foundedUserId = userId;
         return actions.find((action) => action.id === actionId);
       });
@@ -106,6 +104,24 @@ export class InMemoryDatabase implements Database {
     return userActions[actionIndex];
   }
 
+  addUserToHotList(_userId: string) {
+    // Do nothing:
+  }
+
+  removeUserFromHotList(_userId: string) {
+    // Do nothing:
+  }
+
+  reduceUserCredit(userId: string, action: Action, amount: number): Record<ActionName, Credit> {
+    const userCredits = this.credits.get(userId);
+    assert(userCredits, `User ${userId} has no credits`);
+
+    userCredits[action.name] = userCredits[action.name] - amount;
+    this.saveUserCredits(userId, userCredits);
+
+    return userCredits;
+  }
+
   reset() {
     this.credits.clear();
     this.actions.clear();
@@ -115,13 +131,3 @@ export class InMemoryDatabase implements Database {
     return Object.assign(new InMemoryDatabase(), database);
   }
 }
-
-let database = new InMemoryDatabase();
-
-const worker = Worker.getInstance();
-
-worker.subscribe((message) => {
-  database = InMemoryDatabase.hydrate(message.context.database);
-});
-
-export { database };

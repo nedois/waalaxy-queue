@@ -4,7 +4,7 @@ export const ActionNameSchema = z.enum(['A', 'B', 'C']);
 
 export type ActionName = z.infer<typeof ActionNameSchema>;
 
-export const ActionStatusSchema = z.enum(['PENDING', 'COMPLETED', 'FAILED']);
+export const ActionStatusSchema = z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']);
 
 export type ActionStatus = z.infer<typeof ActionStatusSchema>;
 

@@ -7,5 +7,12 @@ export const env = z
     CREDITS_RENEWAL_INTERVAL_IN_MS: z.coerce.number().int().positive(),
     QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS: z.coerce.number().int().positive(),
     WORKER_TICK_INTERVAL_IN_MS: z.coerce.number().int().positive(),
+
+    REDIS_HOST: z.string(),
+    REDIS_PORT: z.coerce.number().int().positive(),
+    REDIS_PASSWORD: z.string(),
+    REDIS_DB: z.coerce.number().int(),
+
+    DB_TYPE: z.enum(['memory', 'redis']),
   })
   .parse(process.env);

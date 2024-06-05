@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import express from 'express';
 import { ActionSchema, CreateActionDtoSchema } from '@waalaxy/contract';
 
@@ -10,14 +9,12 @@ const router = express.Router();
 
 const worker = Worker.getInstance();
 
-router.get('/', (request, response) => {
-  const actions = database.getUserActions(request.userId);
-  const data = z.array(ActionSchema).parse(actions);
-
-  response.status(200).send(data);
+router.get('/', async (request, response) => {
+  const actions = await database.getUserActions(request.userId);
+  response.status(200).send(actions);
 });
 
-router.post('/', (request, response) => {
+router.post('/', async (request, response) => {
   const dto = CreateActionDtoSchema.parse(request.body);
 
   const action = ActionSchema.parse({
@@ -28,7 +25,8 @@ router.post('/', (request, response) => {
     updatedAt: new Date(),
   });
 
-  database.createUserAction(request.userId, action);
+  await database.createUserAction(request.userId, action);
+  await database.addUserToHotList(request.userId);
 
   worker.process(request.userId, 'ACTION:CREATED');
 

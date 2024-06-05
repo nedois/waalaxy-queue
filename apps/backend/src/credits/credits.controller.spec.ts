@@ -9,9 +9,9 @@ import creditsController from './credits.controller';
 const USER_ID = 'user-1';
 
 const credits = {
-  A: { amount: 1 },
-  B: { amount: 2 },
-  C: { amount: 3 },
+  A: 1,
+  B: 2,
+  C: 3,
 } as const;
 
 describe('Credits Controller', () => {
@@ -26,7 +26,7 @@ describe('Credits Controller', () => {
 
     // Renew user credits
     database.reset();
-    database.renewUserActionsCredit(USER_ID, credits);
+    database.saveUserCredits(USER_ID, credits);
   });
 
   it('GET /actions should return user actions', async () => {

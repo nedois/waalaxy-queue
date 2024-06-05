@@ -6,50 +6,60 @@ import { env } from '../env';
 import { BaseAction } from './base.action';
 import { actionInstances } from './actions.handlers';
 import { BaseWorkerMessage, WorkerPostMessage } from './actions.worker';
-import { InMemoryDatabase } from '../database';
+import { InMemoryDatabase } from '../database/in-memory.database';
+import { RedisDatabase } from '../database/redis.database';
 import { timeDifferenceInMilliseconds } from '../utils';
 
 assert(parentPort, 'Not running as a worker');
 
-let database = new InMemoryDatabase();
+const isMemoryDatabase = env.DB_TYPE === 'memory';
+
+let database = isMemoryDatabase ? new InMemoryDatabase() : new RedisDatabase();
 
 parentPort.on('message', ({ context }: WorkerPostMessage) => {
-  // Walkaround: Hydrate the database since the worker does not have access
-  // the main thread database instance
-  database = InMemoryDatabase.hydrate(context.database);
+  if (isMemoryDatabase && context.database) {
+    // Walkaround: Hydrate the database since the worker does not have access
+    // the main thread database instance
+    database = InMemoryDatabase.hydrate(context.database);
+  }
 });
 
 class ActionsProcessor {
   async process(userId: string): Promise<void> {
-    const action = this.getNextUserAction(userId);
+    const action = await this.getNextUserAction(userId);
 
-    console.log(`Processing actions for user ${userId}`, action);
+    console.log(`Processing actions for user ${userId}`);
 
     if (!action) {
+      // Remove user from hot users
+      await database.removeUserFromHotList(userId);
       return;
     }
 
     const actionInstance = this.getActionInstance(action);
 
     this.emit(userId, { actionId: action.id, type: 'ACTION:RUNNING' });
+    await database.updateActionStatus(userId, action.id, 'RUNNING');
     await actionInstance.execute();
 
-    database.updateActionStatus(action.id, 'COMPLETED');
-    database.updatedUser(userId, { locked: false, lastActionExecutedAt: new Date() });
+    await database.updateActionStatus(userId, action.id, 'COMPLETED');
+    await database.reduceUserCredit(userId, action, 1);
+    await database.updatedUser(userId, { locked: false, lastActionExecutedAt: new Date() });
+
     this.emit(userId, { actionId: action.id, type: 'ACTION:COMPLETED' });
   }
 
-  private getActionsToSkip(userId: string): ActionName[] {
-    const userActions = database.getUserActions(userId);
-    const userCredits = database.getUserActionsCredits(userId);
+  private async getActionsToSkip(userId: string): Promise<ActionName[]> {
+    const userActions = await database.getUserActions(userId);
+    const userCredits = await database.getUserCredits(userId);
 
     const uniqueActionsNames = [...new Set(userActions.map((action) => action.name))];
-    return uniqueActionsNames.filter((actionName) => userCredits[actionName].amount === 0);
+    return uniqueActionsNames.filter((actionName) => userCredits[actionName] === 0);
   }
 
-  private getNextUserAction(userId: string): Action | undefined {
-    const actionsToSkip = this.getActionsToSkip(userId);
-    const userActions = database.getUserActions(userId);
+  private async getNextUserAction(userId: string): Promise<Action | undefined> {
+    const actionsToSkip = await this.getActionsToSkip(userId);
+    const userActions = await database.getUserActions(userId);
 
     return userActions
       .filter((action) => !actionsToSkip.includes(action.name))
@@ -64,21 +74,21 @@ class ActionsProcessor {
 
   private emit<T extends Omit<BaseWorkerMessage, 'context'>>(userId: string, data: T) {
     assert(parentPort, 'Not running as a worker');
-    parentPort.postMessage({ userId, data, context: { database } });
+    parentPort.postMessage({ userId, data, context: { database: isMemoryDatabase ? database : null } });
   }
 }
 
 const processor = new ActionsProcessor();
 
-setInterval(() => {
-  const users = database.getUsersWithPendingActions();
+setInterval(async () => {
+  const users = await database.getUsersWithPendingActions();
 
   users.forEach((user) => {
     const actionTimeElapsed = user.lastActionExecutedAt
       ? timeDifferenceInMilliseconds(user.lastActionExecutedAt, new Date())
       : Infinity;
 
-    const shouldProcessActions = actionTimeElapsed > env.QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS && !user.locked;
+    const shouldProcessActions = actionTimeElapsed > env.QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS;
 
     if (shouldProcessActions) {
       database.updatedUser(user.id, { locked: true });

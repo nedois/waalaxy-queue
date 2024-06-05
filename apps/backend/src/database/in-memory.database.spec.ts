@@ -2,11 +2,14 @@ import type { Credit, Action, ActionName } from '@waalaxy/contract';
 import { uuid } from '../utils';
 import { InMemoryDatabase } from './in-memory.database';
 
+const USER_ID = 'John';
+
 describe('InMemoryDatabase', () => {
   let database: InMemoryDatabase;
 
   beforeEach(() => {
     database = new InMemoryDatabase();
+    database.registerUser(USER_ID);
   });
 
   it('shoould return empty array if no actions exists for user', () => {
@@ -16,8 +19,6 @@ describe('InMemoryDatabase', () => {
   });
 
   it('should add and retrieve the user actions', () => {
-    const userId = 'user-1';
-
     const action: Action = {
       id: uuid(),
       name: 'A',
@@ -26,29 +27,27 @@ describe('InMemoryDatabase', () => {
       updatedAt: new Date(),
     };
 
-    database.createUserAction(userId, action);
+    database.createUserAction(USER_ID, action);
 
-    const actions = database.getUserActions(userId);
+    const actions = database.getUserActions(USER_ID);
     expect(actions).toEqual([action]);
   });
 
   it('should renew user actions credit', () => {
-    const userId = 'user-1';
-
     const credits: Record<ActionName, Credit> = {
-      A: { amount: 1 },
-      B: { amount: 2 },
-      C: { amount: 3 },
+      A: 1,
+      B: 2,
+      C: 3,
     };
 
-    database.renewUserActionsCredit(userId, credits);
+    database.saveUserCredits(USER_ID, credits);
 
-    const userCredits = database.getUserActionsCredit(userId);
+    const userCredits = database.getUserCredits(USER_ID);
 
     expect(userCredits).toEqual({
-      A: { amount: 1 },
-      B: { amount: 2 },
-      C: { amount: 3 },
+      A: 1,
+      B: 2,
+      C: 3,
     });
   });
 });
