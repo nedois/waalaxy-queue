@@ -4,9 +4,9 @@ This is a simple FIFO queue system implementation were users can add actions int
 
 ## Requirements
 
-- [ ] User can add an action to the queue
-- [ ] User can see the queue
-- [ ] Recalculate action credits every 10 minutes
-- [ ] Execute actions every 15s
+- [X] User can add an action to the queue
+- [X] User can see the queue
+- [X] Recalculate action credits every 10 minutes
+- [X] Execute actions every 15s
 - [ ] Add start commands: ```nx start frontend``` and ```nx start backend```
 - [ ] Write backend tests
