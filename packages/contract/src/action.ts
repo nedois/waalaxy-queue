@@ -6,6 +6,8 @@ export type ActionName = z.infer<typeof ActionNameSchema>;
 
 export const ActionStatusSchema = z.enum(['PENDING', 'COMPLETED', 'FAILED']);
 
+export type ActionStatus = z.infer<typeof ActionStatusSchema>;
+
 export const ActionSchema = z.object({
   id: z.string().uuid(),
   name: ActionNameSchema,

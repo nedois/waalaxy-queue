@@ -20,8 +20,8 @@ app.use(cors());
 app.use(express.json());
 app.use(auth);
 
-app.use('actions', actionsController);
-app.use('credits', creditsController);
+app.use('/actions', actionsController);
+app.use('/credits', creditsController);
 
 app.use(errorHandler);
 

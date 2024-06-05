@@ -6,5 +6,6 @@ export const env = z
     HOST: z.string(),
     CREDITS_RENEWAL_INTERVAL_IN_MS: z.coerce.number().int().positive(),
     QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS: z.coerce.number().int().positive(),
+    WORKER_TICK_INTERVAL_IN_MS: z.coerce.number().int().positive(),
   })
   .parse(process.env);
