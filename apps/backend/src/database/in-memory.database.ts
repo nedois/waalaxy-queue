@@ -39,6 +39,11 @@ export class InMemoryDatabase implements Database {
 
     return userCredits;
   }
+
+  reset() {
+    this.credits.clear();
+    this.actions.clear();
+  }
 }
 
 export const database = new InMemoryDatabase();
