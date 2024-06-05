@@ -1,6 +1,7 @@
 import styled, { keyframes } from 'styled-components';
+import { useActions } from '../../services';
 
-export const Queue = styled.div<{ status: 'pending' | 'finished' }>`
+const Queue = styled.div<{ status: 'pending' | 'finished' }>`
   padding: ${({ theme }) => theme.spacing.md};
   border: ${({ theme }) => `1px dashed ${theme.colors.primary.main}`};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -18,7 +19,7 @@ export const Queue = styled.div<{ status: 'pending' | 'finished' }>`
   }
 `;
 
-export const QueueAction = styled.span<{ active?: boolean }>`
+const QueueAction = styled.span<{ active?: boolean }>`
   position: relative;
   flex-shrink: 0;
   width: 24px;
@@ -44,3 +45,34 @@ export const QueueAction = styled.span<{ active?: boolean }>`
     `};
   }
 `;
+
+interface UserQueueProps {
+  userId: string;
+}
+
+export function QueueContent({ userId }: UserQueueProps) {
+  const { data = [] } = useActions(userId);
+
+  const pendingActions = data.filter((action) => action.status !== 'COMPLETED');
+  const finishedActions = data.filter((action) => action.status === 'COMPLETED');
+
+  return (
+    <>
+      <Queue status="pending">
+        {pendingActions.map((action) => (
+          <QueueAction key={action.id} active={action.status === 'RUNNING'}>
+            {action.name}
+          </QueueAction>
+        ))}
+      </Queue>
+
+      <Queue status="finished">
+        {finishedActions.map((action) => (
+          <QueueAction key={action.id} active={action.status === 'RUNNING'}>
+            {action.name}
+          </QueueAction>
+        ))}
+      </Queue>
+    </>
+  );
+}

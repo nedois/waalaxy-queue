@@ -1,11 +1,10 @@
-import { useState } from 'react';
 import styled from 'styled-components';
 
 import { useCountdown } from '../../hooks/use-countdown';
 import { Timer } from './timer';
 import { Flex } from '../flex';
-import { QueueAction, Queue } from './queue';
 import { ActionButtons } from './action-buttons';
+import { QueueContent } from './queue-content';
 
 const Root = styled.div`
   display: flex;
@@ -30,17 +29,7 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
-  const [pendingActions, setPendingActions] = useState<string[]>([]);
-  const [finishedActions] = useState<string[]>([]);
-  const { remainingTime, startCountdown } = useCountdown({ startTime: 5 });
-
-  const handleAddAction = (action: string) => {
-    setPendingActions((prevPendingActions) => [...prevPendingActions, action]);
-
-    if (pendingActions.length === 0) {
-      startCountdown();
-    }
-  };
+  const { remainingTime } = useCountdown({ startTime: 5 });
 
   return (
     <Root>
@@ -49,21 +38,9 @@ export function UserQueue({ userId }: UserQueueProps) {
         <Timer time={remainingTime} />
       </Flex>
 
-      <ActionButtons userId={userId} onClick={handleAddAction} />
+      <ActionButtons userId={userId} />
 
-      <Queue status="pending">
-        {pendingActions.map((action, index) => (
-          <QueueAction active={index === 0} key={index}>
-            {action}
-          </QueueAction>
-        ))}
-      </Queue>
-
-      <Queue status="finished">
-        {finishedActions.map((action, index) => (
-          <QueueAction key={index}>{action}</QueueAction>
-        ))}
-      </Queue>
+      <QueueContent userId={userId} />
     </Root>
   );
 }
