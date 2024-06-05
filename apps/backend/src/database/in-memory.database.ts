@@ -22,7 +22,7 @@ export class InMemoryDatabase implements Database {
     return action;
   }
 
-  getUserActionsCredit(userId: string): Record<string, Credit> {
+  getUserActionsCredits(userId: string): Record<string, Credit> {
     const userCredits = this.credits.get(userId);
     assert(userCredits, `User ${userId} has no credits`);
     return userCredits;
