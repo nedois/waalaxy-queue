@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 
 import { env } from './env';
 import { auth } from './auth';
@@ -13,6 +14,7 @@ app.get('/', (req, res) => {
   res.send({ message: 'Hello API' });
 });
 
+app.use(cors());
 app.use(express.json());
 app.use(auth);
 
