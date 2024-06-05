@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 
-import { useCredits } from '../../services';
 import { useCountdown } from '../../hooks/use-countdown';
 import { Timer } from './timer';
 import { Flex } from '../flex';
 import { QueueAction, Queue } from './queue';
-import { ActionButton } from './action-button';
+import { ActionButtons } from './action-buttons';
 
 const Root = styled.div`
   display: flex;
@@ -31,7 +30,6 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
-  const { data: credits } = useCredits(userId);
   const [pendingActions, setPendingActions] = useState<string[]>([]);
   const [finishedActions] = useState<string[]>([]);
   const { remainingTime, startCountdown } = useCountdown({ startTime: 5 });
@@ -44,8 +42,6 @@ export function UserQueue({ userId }: UserQueueProps) {
     }
   };
 
-  console.log({ credits });
-
   return (
     <Root>
       <Flex grow>
@@ -53,17 +49,7 @@ export function UserQueue({ userId }: UserQueueProps) {
         <Timer time={remainingTime} />
       </Flex>
 
-      <Flex gap={18} center>
-        <ActionButton credit={credits?.['A']} onClick={() => handleAddAction('A')}>
-          Action A
-        </ActionButton>
-        <ActionButton credit={0} onClick={() => handleAddAction('B')}>
-          Action B
-        </ActionButton>
-        <ActionButton credit={0} onClick={() => handleAddAction('C')}>
-          Action C
-        </ActionButton>
-      </Flex>
+      <ActionButtons userId={userId} onClick={handleAddAction} />
 
       <Queue status="pending">
         {pendingActions.map((action, index) => (
