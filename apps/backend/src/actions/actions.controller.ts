@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import express from 'express';
-import { ActionSchema } from '@waalaxy/contract';
+import { ActionSchema, CreateActionDtoSchema } from '@waalaxy/contract';
 
 import { database } from '../database';
+import { uuid } from '../utils';
 
 const router = express.Router();
 
@@ -13,7 +14,18 @@ router.get('/', (request, response) => {
 });
 
 router.post('/', (request, response) => {
-  response.send({ message: 'Action created' });
+  const dto = CreateActionDtoSchema.parse(request.body);
+  const action = ActionSchema.parse({
+    ...dto,
+    id: uuid(),
+    status: 'PENDING',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  database.createUserAction(request.userId, action);
+
+  response.status(201).send(action);
 });
 
 export default router;

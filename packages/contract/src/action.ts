@@ -19,7 +19,6 @@ export type Action = z.infer<typeof ActionSchema>;
 /* --------------------------------- REQUEST -------------------------------- */
 
 export const CreateActionDtoSchema = z.object({
-  id: z.string().uuid(),
   name: ActionNameSchema,
 });
 
