@@ -83,7 +83,7 @@ const processor = new ActionsProcessor();
 setInterval(async () => {
   const users = await database.getUsersWithPendingActions();
 
-  users.forEach((user) => {
+  users.forEach(async (user) => {
     const actionTimeElapsed = user.lastActionExecutedAt
       ? timeDifferenceInMilliseconds(user.lastActionExecutedAt, new Date())
       : Infinity;
@@ -91,7 +91,7 @@ setInterval(async () => {
     const shouldProcessActions = actionTimeElapsed > env.QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS;
 
     if (shouldProcessActions) {
-      database.updatedUser(user.id, { locked: true });
+      await database.updatedUser(user.id, { locked: true });
       processor.process(user.id);
     }
   });

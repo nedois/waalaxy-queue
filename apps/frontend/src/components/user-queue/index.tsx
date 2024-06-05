@@ -5,6 +5,8 @@ import { Timer } from './timer';
 import { Flex } from '../flex';
 import { ActionButtons } from './action-buttons';
 import { QueueContent } from './queue-content';
+import { useAccount } from '../../services';
+import { timeDifferenceInSeconds } from '../../utils';
 
 const Root = styled.div`
   display: flex;
@@ -29,7 +31,13 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
-  const { remainingTime } = useCountdown({ startTime: 5 });
+  const { data: user } = useAccount(userId);
+
+  const startTime = timeDifferenceInSeconds(user?.lastActionExecutedAt ?? new Date(), new Date());
+
+  const { remainingTime } = useCountdown({ startTime, status: 'running' });
+
+  console.log(startTime);
 
   return (
     <Root>

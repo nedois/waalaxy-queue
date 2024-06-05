@@ -39,6 +39,7 @@ export function useAddAction(userId: string) {
   return useMutation((data: CreateActionDto) => addUserAction(userId, data), {
     onSuccess: () => {
       queryClient.invalidateQueries(['actions', userId]);
+      queryClient.invalidateQueries(['account', userId]);
     },
   });
 }
