@@ -31,7 +31,7 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
-  const { data: credits } = useCredits();
+  const { data: credits } = useCredits(userId);
   const [pendingActions, setPendingActions] = useState<string[]>([]);
   const [finishedActions] = useState<string[]>([]);
   const { remainingTime, startCountdown } = useCountdown({ startTime: 5 });

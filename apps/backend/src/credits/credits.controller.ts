@@ -6,8 +6,8 @@ import { database } from '../database';
 
 const router = express.Router();
 
-router.get('/', (request, response) => {
-  const credits = database.getUserCredits(request.userId);
+router.get('/', async (request, response) => {
+  const credits = await database.getUserCredits(request.userId);
   const data = z.record(ActionNameSchema, CreditSchema).parse(credits);
   response.status(200).send(data);
 });
