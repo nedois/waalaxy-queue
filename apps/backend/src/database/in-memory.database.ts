@@ -64,7 +64,7 @@ export class InMemoryDatabase implements Database {
     this.users.set(userId, user);
 
     const userCredits = Object.entries(actionInstances).reduce((credits, [actionName, action]) => {
-      credits[actionName] = { amount: action.generateNewCredit() };
+      credits[actionName] = action.generateNewCredit();
       return credits;
     }, {} as Record<ActionName, Credit>);
 

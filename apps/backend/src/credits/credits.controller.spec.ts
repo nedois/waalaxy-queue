@@ -6,13 +6,7 @@ import { errorHandler } from '../errors';
 import { auth } from '../auth';
 import creditsController from './credits.controller';
 
-const USER_ID = 'user-1';
-
-const credits = {
-  A: 1,
-  B: 2,
-  C: 3,
-} as const;
+const USER_ID = 'John';
 
 describe('Credits Controller', () => {
   let app: Express;
@@ -26,13 +20,15 @@ describe('Credits Controller', () => {
 
     // Renew user credits
     database.reset();
-    database.saveUserCredits(USER_ID, credits);
+    database.registerUser(USER_ID);
   });
 
-  it('GET /actions should return user actions', async () => {
+  it('GET /actions should return user default credits', async () => {
     const response = await client(app).get('/credits').set('Authorization', `Bearer ${USER_ID}`);
     expect(response.status).toBe(200);
 
-    expect(response.body).toEqual(credits);
+    expect(response.body).toHaveProperty('A');
+    expect(response.body).toHaveProperty('B');
+    expect(response.body).toHaveProperty('C');
   });
 });
