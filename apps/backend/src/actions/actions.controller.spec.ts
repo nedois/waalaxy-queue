@@ -9,6 +9,14 @@ import { auth } from '../auth';
 import { uuid } from '../utils';
 import actionsController from './actions.controller';
 
+jest.mock('./actions.worker', () => ({
+  Worker: {
+    getInstance: () => ({
+      process: jest.fn(),
+    }),
+  },
+}));
+
 const USER_ID = 'user-1';
 
 const actions = (['A', 'B', 'C'] as const).map((name) => ({

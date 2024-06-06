@@ -14,22 +14,26 @@ router.get('/', async (request, response) => {
   response.status(200).send(actions);
 });
 
-router.post('/', async (request, response) => {
-  const dto = CreateActionDtoSchema.parse(request.body);
+router.post('/', async (request, response, next) => {
+  try {
+    const dto = CreateActionDtoSchema.parse(request.body);
 
-  const action = ActionSchema.parse({
-    ...dto,
-    id: uuid(),
-    status: 'PENDING',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+    const action = ActionSchema.parse({
+      ...dto,
+      id: uuid(),
+      status: 'PENDING',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-  await database.createUserAction(request.userId, action);
+    await database.createUserAction(request.userId, action);
 
-  worker.process(request.userId, 'ACTION:CREATED');
+    worker.process(request.userId, 'ACTION:CREATED');
 
-  response.status(201).send(action);
+    response.status(201).send(action);
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get('/subscribe', (request, response) => {
@@ -41,7 +45,7 @@ router.get('/subscribe', (request, response) => {
     'X-Accel-Buffering': 'no',
   });
 
-  const notificationHandler: WorkerEventHandler = (message: any) => {
+  const notificationHandler: WorkerEventHandler = (message) => {
     if (message.userId === request.userId) {
       response.write(`data: ${JSON.stringify(message.data)}\n\n`);
     }

@@ -8,7 +8,7 @@ import { env } from '../env';
 
 export type BaseWorkerMessage = { actionId: string; type: ActionEvent; context: WorkerContext };
 
-export type WorkerEventHandler = <T extends BaseWorkerMessage>(data: T) => void;
+export type WorkerEventHandler<T extends BaseWorkerMessage = any> = (data: T) => void;
 
 export interface WorkerContext {
   database: Database | null;
@@ -46,24 +46,24 @@ export class Worker extends NodeWorker {
 
     super(path, workerOptions);
 
-    super.on('message', (message) => {
+    this.on('message', (message) => {
       onMessage?.(message);
     });
 
-    super.on('error', (error) => {
+    this.on('error', (error) => {
       console.log('Worker error:', error);
       onError?.(error);
-      super.terminate();
+      this.terminate();
     });
 
-    super.on('exit', async (code) => {
+    this.on('exit', async (code) => {
       onExit?.(code);
-      super.terminate();
+      this.terminate();
     });
   }
 
   process(userId: string, event: ActionEvent) {
-    super.postMessage({
+    this.postMessage({
       userId,
       event,
       context: {
@@ -73,10 +73,10 @@ export class Worker extends NodeWorker {
   }
 
   subscribe(handler: WorkerEventHandler) {
-    super.on('message', handler);
+    this.on('message', handler);
   }
 
   unsubscribe(handler: WorkerEventHandler) {
-    super.off('message', handler);
+    this.off('message', handler);
   }
 }
