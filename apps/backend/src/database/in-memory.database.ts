@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { Credit, Action, ActionStatus, User, ActionName } from '@waalaxy/contract';
+import { Credit, Action, User, ActionName } from '@waalaxy/contract';
 
 import type { Database } from './types';
 import { actionInstances } from '../actions/actions.handlers';

@@ -31,6 +31,7 @@ describe('Actions Controller', () => {
 
     // Create actions for a user
     database.reset();
+    database.registerUser(USER_ID);
     actions.forEach((action) => database.createUserAction(USER_ID, action));
   });
 
