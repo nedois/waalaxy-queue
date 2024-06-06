@@ -26,7 +26,6 @@ router.post('/', async (request, response) => {
   });
 
   await database.createUserAction(request.userId, action);
-  await database.addUserToHotList(request.userId);
 
   worker.process(request.userId, 'ACTION:CREATED');
 

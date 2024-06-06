@@ -18,16 +18,12 @@ export class InMemoryDatabase implements Database {
     return this.users.get(userId) ?? null;
   }
 
-  getUserActions(userId: string): Action[] {
-    return this.actions.get(userId) ?? [];
+  getUsers(): User[] {
+    return Array.from(this.users.values());
   }
 
-  getUsersWithPendingActions(): User[] {
-    return Array.from(this.actions.keys()).map((userId) => {
-      const user = this.users.get(userId);
-      assert(user, `User ${userId} not found`);
-      return user;
-    });
+  getUserActions(userId: string): Action[] {
+    return this.actions.get(userId) ?? [];
   }
 
   createUserAction(userId: string, action: Action): Action {
@@ -87,7 +83,7 @@ export class InMemoryDatabase implements Database {
     return user;
   }
 
-  updateActionStatus(userId: string, actionId: string, status: ActionStatus): Action {
+  updateAction(userId: string, actionId: string, data: Partial<Action>): Action {
     let foundedUserId = '';
 
     const actionIndex = Array.from(this.actions.values())
@@ -100,20 +96,12 @@ export class InMemoryDatabase implements Database {
     const userActions = this.actions.get(foundedUserId);
     assert(userActions, `Action ${actionId} not found`);
 
-    userActions[actionIndex].status = status;
+    Object.assign(userActions[actionIndex], data);
     userActions[actionIndex].updatedAt = new Date();
 
     this.actions.set(foundedUserId, userActions);
 
     return userActions[actionIndex];
-  }
-
-  addUserToHotList(_userId: string) {
-    // Do nothing:
-  }
-
-  removeUserFromHotList(_userId: string) {
-    // Do nothing:
   }
 
   reduceUserCredit(userId: string, action: Action, amount: number): Record<ActionName, Credit> {
@@ -128,6 +116,7 @@ export class InMemoryDatabase implements Database {
 
   reset() {
     this.credits.clear();
+    this.actions.clear();
     this.actions.clear();
   }
 

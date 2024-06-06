@@ -1,37 +1,10 @@
-import express from 'express';
-import cors from 'cors';
-
+import { app } from './app';
 import { env } from './env';
-import { accountController, auth } from './auth';
-import { errorHandler } from './errors';
-import { actionsController } from './actions';
-import { creditsController } from './credits';
-import { database } from './database';
+
+import './routers';
 
 const host = env.HOST;
 const port = env.PORT;
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.send({ message: 'Hello API' });
-});
-
-app.post('/reset', async (request, response) => {
-  await database.reset();
-  response.send({ message: 'Database reset' });
-});
-
-/* ---------------------------- PROTECTED ROUTES ---------------------------- */
-app.use(auth);
-app.use('/account', accountController);
-app.use('/actions', actionsController);
-app.use('/credits', creditsController);
-
-app.use(errorHandler);
 
 app.listen(port, host, () => {
   console.log(`[ ready ] http://${host}:${port}`);

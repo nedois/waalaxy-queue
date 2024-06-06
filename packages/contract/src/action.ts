@@ -14,6 +14,7 @@ export const ActionSchema = z.object({
   status: ActionStatusSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
+  runnedAt: z.coerce.date().nullable().optional(),
 });
 
 export type Action = z.infer<typeof ActionSchema>;

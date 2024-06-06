@@ -39,3 +39,13 @@ export const actionInstances = {
   B: new ActionB(),
   C: new ActionC(),
 };
+
+export function computeNewCredits() {
+  const credits = {
+    A: actionInstances.A.generateNewCredit(),
+    B: actionInstances.B.generateNewCredit(),
+    C: actionInstances.C.generateNewCredit(),
+  };
+
+  return credits;
+}

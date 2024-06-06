@@ -30,7 +30,7 @@ interface UserQueueProps {
 }
 
 export function UserQueue({ userId }: UserQueueProps) {
-  const { remainingTime, resetCountdown } = useCountdown({ startTime: 14, status: 'running' });
+  const { remainingTime, resetCountdown, startCountdown } = useCountdown({ startTime: 15 });
 
   useSubscribeToActions(userId, {
     onRunningAction: resetCountdown,
@@ -43,7 +43,7 @@ export function UserQueue({ userId }: UserQueueProps) {
         <Timer time={remainingTime} />
       </Flex>
 
-      <ActionButtons userId={userId} />
+      <ActionButtons userId={userId} onClick={() => startCountdown()} />
 
       <QueueContent userId={userId} />
     </Root>

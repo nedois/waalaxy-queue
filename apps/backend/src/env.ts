@@ -5,8 +5,7 @@ export const env = z
     PORT: z.coerce.number().int().positive(),
     HOST: z.string(),
     CREDITS_RENEWAL_INTERVAL_IN_MS: z.coerce.number().int().positive(),
-    QUEUE_ACTION_EXECUTION_INTERVAL_IN_MS: z.coerce.number().int().positive(),
-    WORKER_TICK_INTERVAL_IN_MS: z.coerce.number().int().positive(),
+    QUEUE_EXECUTION_INTERVAL_IN_MS: z.coerce.number().int().positive(),
 
     REDIS_HOST: z.string(),
     REDIS_PORT: z.coerce.number().int().positive(),

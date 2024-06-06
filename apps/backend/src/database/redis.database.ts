@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { Redis } from 'ioredis';
 import { z } from 'zod';
-// import { Credit, Action, ActionStatus, ActionSchema, UserSchema, User, ActionName } from '@waalaxy/contract';
+// import { Credit, Action, UserSchema, User, ActionName } from '@waalaxy/contract';
 
 import { env } from '../env';
 import { actionInstances } from '../actions/actions.handlers';
@@ -17,14 +17,13 @@ type ActionName = z.infer<typeof ActionNameSchema>;
 
 const ActionStatusSchema = z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']);
 
-type ActionStatus = z.infer<typeof ActionStatusSchema>;
-
 const ActionSchema = z.object({
   id: z.string().uuid(),
   name: ActionNameSchema,
   status: ActionStatusSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
+  runnedAt: z.coerce.date().nullable().optional(),
 });
 
 type Action = z.infer<typeof ActionSchema>;
@@ -61,15 +60,24 @@ export class RedisDatabase implements Database {
     return `user:${userId}`;
   }
 
-  private getHotUsersKey() {
-    return 'hot-users';
-  }
-
   async getUser(userId: string) {
     return this.redis
       .get(this.getUserKey(userId))
       .then((data) => (data ? JSON.parse(data) : null))
-      .then((data) => UserSchema.nullable().parse(data));
+      .then(UserSchema.nullable().parse);
+  }
+
+  async getUsers(): Promise<User[]> {
+    return this.redis
+      .keys(this.getUserKey('*'))
+      .then((keys) => this.redis.mget(keys))
+      .then((data) =>
+        data.map((user) => {
+          assert(user, 'User data not found');
+          return JSON.parse(user);
+        })
+      )
+      .then(z.array(UserSchema).parse);
   }
 
   async getUserActions(userId: string): Promise<Action[]> {
@@ -126,29 +134,15 @@ export class RedisDatabase implements Database {
     return user;
   }
 
-  async updateActionStatus(userId: string, actionId: string, status: ActionStatus): Promise<Action> {
+  async updateAction(userId: string, actionId: string, data: Partial<Action>): Promise<Action> {
     const actions = await this.getUserActions(userId);
     const action = actions.find((a) => a.id === actionId);
     assert(action, `Action ${actionId} not found`);
 
-    action.status = status;
+    Object.assign(action, data);
     await this.redis.lset(this.getActionsKey(userId), actions.indexOf(action), JSON.stringify(action));
 
     return action;
-  }
-
-  async addUserToHotList(userId: string) {
-    await this.redis.sadd(this.getHotUsersKey(), userId);
-  }
-
-  async removeUserFromHotList(userId: string) {
-    await this.redis.srem(this.getHotUsersKey(), userId);
-  }
-
-  async getUsersWithPendingActions(): Promise<User[]> {
-    const userIds = await this.redis.smembers(this.getHotUsersKey());
-    const users = await Promise.all(userIds.map((userId) => this.getUser(userId)));
-    return z.array(UserSchema).parse(users);
   }
 
   async reduceUserCredit(userId: string, action: Action, amount: number): Promise<Record<ActionName, Credit>> {
