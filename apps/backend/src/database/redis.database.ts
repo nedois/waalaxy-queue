@@ -1,40 +1,11 @@
 import assert from 'node:assert';
 import { Redis } from 'ioredis';
 import { z } from 'zod';
-// import { Credit, Action, UserSchema, User, ActionName } from '@waalaxy/contract';
+import { Credit, Action, ActionSchema, UserSchema, User, ActionName } from '@waalaxy/contract';
 
 import { env } from '../env';
 import { actionInstances } from '../actions/actions.handlers';
 import { type Database } from './types';
-
-const CreditSchema = z.number().int().min(0);
-
-type Credit = z.infer<typeof CreditSchema>;
-
-const ActionNameSchema = z.enum(['A', 'B', 'C']);
-
-type ActionName = z.infer<typeof ActionNameSchema>;
-
-const ActionStatusSchema = z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']);
-
-const ActionSchema = z.object({
-  id: z.string().uuid(),
-  name: ActionNameSchema,
-  status: ActionStatusSchema,
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-  runnedAt: z.coerce.date().nullable().optional(),
-});
-
-type Action = z.infer<typeof ActionSchema>;
-
-const UserSchema = z.object({
-  id: z.string(),
-  lastActionExecutedAt: z.coerce.date().nullable(),
-  locked: z.boolean(),
-});
-
-type User = z.infer<typeof UserSchema>;
 
 export class RedisDatabase implements Database {
   public readonly redis: Redis;

@@ -1,6 +1,11 @@
 import { randomInt, wait } from '../utils';
 import { BaseAction } from './base.action';
 
+/**
+ * Some fake actions that simulate some work.
+ * Actions have different execution time but none exceed 15 s
+ */
+
 class ActionA extends BaseAction {
   public readonly name = 'A' as const;
 

@@ -15,13 +15,14 @@ assert(parentPort, 'Scheduler should run inside a worker');
 
 const isMemoryDatabase = env.DB_TYPE === 'memory';
 
-let database = isMemoryDatabase ? new InMemoryDatabase() : new RedisDatabase();
+// Create worker database instance
+let defaultDatabase = isMemoryDatabase ? new InMemoryDatabase() : new RedisDatabase();
 
 parentPort.on('message', ({ context }: WorkerPostMessage) => {
   if (isMemoryDatabase && context.database) {
     // Walkaround: Hydrate the database since the worker does not have access
     // the main thread database instance
-    database = InMemoryDatabase.hydrate(context.database);
+    defaultDatabase = InMemoryDatabase.hydrate(context.database);
   }
 });
 
@@ -33,11 +34,13 @@ export class ActionsScheduler {
   private readonly database: Database;
 
   constructor(customDatabase?: Database) {
-    this.database = customDatabase || database;
+    this.database = customDatabase || defaultDatabase;
   }
 
   async process(userId: string, action: Action): Promise<void> {
     console.log(`Processing action ${action.id} for user ${userId}`);
+
+    // Notify the user that the action is running
     this.emit(userId, { actionId: action.id, type: 'ACTION:RUNNING' });
 
     const actionInstance = this.getActionInstance(action);
@@ -156,8 +159,11 @@ export class ActionsScheduler {
     await this.database.updateAction(userId, action.id, { status: 'COMPLETED' });
     await this.database.reduceUserCredit(userId, action, 1);
     await this.database.updatedUser(userId, { locked: false });
+
+    // Notify the user that the action is completed
     this.emit(userId, { actionId: action.id, type: 'ACTION:COMPLETED' });
 
+    // Schedule the next action
     await this.scheduleNextAction(userId);
   }
 

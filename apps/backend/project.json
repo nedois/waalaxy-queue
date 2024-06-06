@@ -65,6 +65,18 @@
       "options": {
         "command": "nx serve backend"
       }
+    },
+    "docker-up": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose up -d"
+      }
+    },
+    "docker-down": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose down -d"
+      }
     }
   }
 }

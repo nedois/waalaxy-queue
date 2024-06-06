@@ -46,6 +46,7 @@ router.get('/subscribe', (request, response) => {
   });
 
   const notificationHandler: WorkerEventHandler = (message) => {
+    // Send the message to the user that created the action
     if (message.userId === request.userId) {
       response.write(`data: ${JSON.stringify(message.data)}\n\n`);
     }
