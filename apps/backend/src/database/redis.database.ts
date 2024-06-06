@@ -37,7 +37,7 @@ const UserSchema = z.object({
 type User = z.infer<typeof UserSchema>;
 
 export class RedisDatabase implements Database {
-  private readonly redis: Redis;
+  public readonly redis: Redis;
 
   constructor() {
     this.redis = new Redis({

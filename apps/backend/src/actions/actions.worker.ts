@@ -34,7 +34,6 @@ export class Worker extends NodeWorker {
     if (!Worker.instance) {
       Worker.instance = new Worker({
         path: join(__dirname, './actions.processor'),
-        onExit: (code) => console.log(`Worker exited with code ${code}`),
       });
     }
 
@@ -51,7 +50,6 @@ export class Worker extends NodeWorker {
     });
 
     this.on('error', (error) => {
-      console.log('Worker error:', error);
       onError?.(error);
       this.terminate();
     });

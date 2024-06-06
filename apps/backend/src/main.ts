@@ -6,7 +6,7 @@ import { accountController, auth } from './auth';
 import { errorHandler } from './errors';
 import { actionsController, Worker } from './actions';
 import { creditsController } from './credits';
-import { database } from './database';
+import { database, RedisDatabase } from './database';
 
 const host = env.HOST;
 const port = env.PORT;
@@ -39,6 +39,11 @@ const server = app.listen(port, host, () => {
 process.on('SIGTERM', () => {
   server.close(async () => {
     await Worker.getInstance().terminate();
+
+    if (database instanceof RedisDatabase) {
+      database.redis.disconnect();
+    }
+
     process.exit(0);
   });
 });
