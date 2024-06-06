@@ -117,7 +117,7 @@ export class InMemoryDatabase implements Database {
   reset() {
     this.credits.clear();
     this.actions.clear();
-    this.actions.clear();
+    this.users.clear();
   }
 
   static hydrate(database: Database) {

@@ -15,7 +15,7 @@ parentPort.on('message', async ({ userId, event }: WorkerPostMessage) => {
   }
 });
 
-async function onInit() {
+export async function onInit() {
   const users = await database.getUsers();
 
   users.forEach(async (user) => {

@@ -22,6 +22,10 @@ describe('Auth middleware', () => {
     });
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should respond with 401 if authorization header is missing', async () => {
     const response = await client(app).get('/protected');
     expect(response.status).toBe(401);

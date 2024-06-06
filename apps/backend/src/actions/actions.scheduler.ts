@@ -9,6 +9,7 @@ import { BaseWorkerMessage, WorkerPostMessage } from './actions.worker';
 import { InMemoryDatabase } from '../database/in-memory.database';
 import { RedisDatabase } from '../database/redis.database';
 import { timeDifferenceInMilliseconds } from '../utils';
+import { Database } from '../database';
 
 assert(parentPort, 'Scheduler should run inside a worker');
 
@@ -29,6 +30,11 @@ export class ActionsScheduler {
   private readonly RENEWAL_CREDITS_INTERVAL = env.CREDITS_RENEWAL_INTERVAL_IN_MS;
   private readonly LOCK_THRESHOLD = 2 * env.QUEUE_EXECUTION_INTERVAL_IN_MS;
   private readonly ACTION_EXECUTION_INTERVAL = env.QUEUE_EXECUTION_INTERVAL_IN_MS;
+  private readonly database: Database;
+
+  constructor(customDatabase?: Database) {
+    this.database = customDatabase || database;
+  }
 
   async process(userId: string, action: Action): Promise<void> {
     console.log(`Processing action ${action.id} for user ${userId}`);
@@ -36,7 +42,7 @@ export class ActionsScheduler {
 
     const actionInstance = this.getActionInstance(action);
 
-    await database.updateAction(userId, action.id, { status: 'RUNNING', runnedAt: new Date() });
+    await this.database.updateAction(userId, action.id, { status: 'RUNNING', runnedAt: new Date() });
     await actionInstance.execute();
 
     await this.onActionCompleted(userId, action);
@@ -44,15 +50,15 @@ export class ActionsScheduler {
 
   private async getActionsToSkip(userId: string): Promise<ActionName[]> {
     const [userActions, userCredits] = await Promise.all([
-      database.getUserActions(userId),
-      database.getUserCredits(userId),
+      this.database.getUserActions(userId),
+      this.database.getUserCredits(userId),
     ]);
 
     const uniqueActionsNames = [...new Set(userActions.map((action) => action.name))];
     return uniqueActionsNames.filter((actionName) => userCredits[actionName] === 0);
   }
 
-  private getActionInstance(action: Action): BaseAction {
+  getActionInstance(action: Action): BaseAction {
     const actionInstance = actionInstances[action.name];
     assert(actionInstance, `Action ${action.name} not found`);
     return actionInstance;
@@ -60,13 +66,13 @@ export class ActionsScheduler {
 
   private emit<T extends Omit<BaseWorkerMessage, 'context'>>(userId: string, data: T) {
     assert(parentPort, 'Not running as a worker');
-    parentPort.postMessage({ userId, data, context: { database: isMemoryDatabase ? database : null } });
+    parentPort.postMessage({ userId, data, context: { database: isMemoryDatabase ? this.database : null } });
   }
 
   private async getNextUserAction(userId: string): Promise<Action | undefined> {
     const [actionsToSkip, userActions] = await Promise.all([
       this.getActionsToSkip(userId),
-      database.getUserActions(userId),
+      this.database.getUserActions(userId),
     ]);
 
     return userActions
@@ -83,7 +89,7 @@ export class ActionsScheduler {
   }
 
   async scheduleNextAction(userId: string) {
-    let user = await database.getUser(userId);
+    let user = await this.database.getUser(userId);
     assert(user, `User ${userId} not found`);
 
     user = await this.revalidateUserLock(user);
@@ -102,12 +108,12 @@ export class ActionsScheduler {
 
     // Lock the user to avoid processing workers to execute the same
     // action queue at the same time
-    await database.updatedUser(userId, { locked: true, lastActionExecutedAt: new Date() });
+    await this.database.updatedUser(userId, { locked: true, lastActionExecutedAt: new Date() });
 
     const isFirstAction = !this.usersTimeout.has(userId);
 
     const timeoutId = setTimeout(
-      () => this.process(userId, action),
+      async () => await this.process(userId, action),
       isFirstAction ? 0 : this.ACTION_EXECUTION_INTERVAL
     );
     this.usersTimeout.set(userId, timeoutId);
@@ -131,7 +137,7 @@ export class ActionsScheduler {
      * This avoid the user queue to be stuck if the worker crashes.
      */
     if (lastActionTimeElapsed > this.LOCK_THRESHOLD && user.locked) {
-      return database.updatedUser(user.id, { locked: false });
+      return this.database.updatedUser(user.id, { locked: false });
     }
 
     return user;
@@ -142,14 +148,14 @@ export class ActionsScheduler {
 
     if (lastActionTimeElapsed > this.RENEWAL_CREDITS_INTERVAL) {
       const newCredits = computeNewCredits();
-      await database.saveUserCredits(user.id, newCredits);
+      await this.database.saveUserCredits(user.id, newCredits);
     }
   }
 
   private async onActionCompleted(userId: string, action: Action) {
-    await database.updateAction(userId, action.id, { status: 'COMPLETED' });
-    await database.reduceUserCredit(userId, action, 1);
-    await database.updatedUser(userId, { locked: false });
+    await this.database.updateAction(userId, action.id, { status: 'COMPLETED' });
+    await this.database.reduceUserCredit(userId, action, 1);
+    await this.database.updatedUser(userId, { locked: false });
     this.emit(userId, { actionId: action.id, type: 'ACTION:COMPLETED' });
 
     await this.scheduleNextAction(userId);
