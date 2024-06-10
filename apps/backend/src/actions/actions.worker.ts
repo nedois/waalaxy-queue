@@ -34,7 +34,6 @@ export class Worker extends NodeWorker {
     if (!Worker.instance) {
       Worker.instance = new Worker({
         path: join(__dirname, './actions.processor'),
-        onError: console.error,
       });
     }
 
