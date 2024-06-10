@@ -1,11 +1,29 @@
 import assert from 'node:assert';
 import { Redis } from 'ioredis';
 import { z } from 'zod';
-import { Credit, Action, ActionSchema, UserSchema, User, ActionName } from '@waalaxy/contract';
+import { Credit, Action, User, ActionName } from '@waalaxy/contract';
 
 import { env } from '../env';
 import { actionInstances } from '../actions/actions.handlers';
 import { type Database } from './types';
+
+/* ---------------------------------- FIXME --------------------------------- */
+// Walkaround for missing module resolution
+const ActionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.enum(['A', 'B', 'C']),
+  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  runnedAt: z.coerce.date().nullable().optional(),
+});
+
+const UserSchema = z.object({
+  id: z.string(),
+  lastActionExecutedAt: z.coerce.date().nullable(),
+  locked: z.boolean(),
+});
+/* ---------------------------------- FIXME --------------------------------- */
 
 export class RedisDatabase implements Database {
   public readonly redis: Redis;
