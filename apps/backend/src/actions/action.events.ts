@@ -1,1 +1,0 @@
-export type ActionEvent = 'ACTION:CREATED' | 'ACTION:RUNNING' | 'ACTION:COMPLETED' | 'ACTION:ERROR';

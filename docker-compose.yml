@@ -1,3 +1,5 @@
+name: "waalaxy"
+
 services:
   database:
     image: redis:alpine

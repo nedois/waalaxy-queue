@@ -42,6 +42,8 @@
         "no-restricted-syntax": "off",
         "react-hooks/exhaustive-deps": "off",
         "import/no-extraneous-dependencies": "off",
+        "@typescript-eslint/ban-types": "off",
+        "@typescript-eslint/no-empty-interface": "off",
         "import/extensions": "off",
         "import/no-unresolved": [0],
         "no-unused-vars": "off",
