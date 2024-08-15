@@ -8,7 +8,10 @@ type Input = {
   username: string;
 };
 
-type Output = User;
+type Output = {
+  user: User;
+  isNewUser: boolean;
+};
 
 export class GetUserInfoUseCase implements UseCase<Input, Output> {
   constructor(private readonly userRepository: UserRepository) {}
@@ -18,9 +21,10 @@ export class GetUserInfoUseCase implements UseCase<Input, Output> {
 
     // Create user if not found since not authentication mechanism is implemented
     if (!user) {
-      return this.userRepository.save(new User({ id: randomUUID(), username: input.username }));
+      const newUser = await this.userRepository.save(new User({ id: randomUUID(), username: input.username }));
+      return { user: newUser, isNewUser: true };
     }
 
-    return user;
+    return { user, isNewUser: false };
   }
 }

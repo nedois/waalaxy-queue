@@ -1,10 +1,10 @@
 import { User, type UserRepository } from '@repo/domain';
 
-const users = new Map<string, User>();
+const database = new Map<string, User>();
 
 export class UserInMemoryRepository implements UserRepository {
   findOne(id: string) {
-    return users.get(id) ?? null;
+    return database.get(id) ?? null;
   }
 
   findOneByUsername(username: string) {
@@ -13,11 +13,11 @@ export class UserInMemoryRepository implements UserRepository {
   }
 
   find() {
-    return Array.from(users.values());
+    return Array.from(database.values());
   }
 
   save(user: User) {
-    users.set(user.id, user);
+    database.set(user.id, user);
     return user;
   }
 }

@@ -1,4 +1,4 @@
-import { Action } from '../entities';
+import type { Action } from '../entities';
 
 export interface ActionRepository {
   findByUserId(userId: string): Promise<Action[]> | Action[];

@@ -1,13 +1,17 @@
 import {
   CreateUserActionUseCase,
   GetUserActionsUseCase,
+  GetUserCreditsUseCase,
   GetUserInfoUseCase,
+  RecalculateUserCreditsUseCase,
   type ActionRepository,
   type UserRepository,
 } from '@repo/domain';
 import {
   ActionInMemoryRepository,
   ActionRedisRepository,
+  CreditInMemoryRepository,
+  CreditRedisRepository,
   UserInMemoryRepository,
   UserRedisRepository,
 } from '@repo/infra';
@@ -29,6 +33,8 @@ interface InjectionContainer {
   getUserInfoUseCase: GetUserInfoUseCase;
   getUserActionsUseCase: GetUserActionsUseCase;
   createUserActionUseCase: CreateUserActionUseCase;
+  getUserCreditsUseCase: GetUserCreditsUseCase;
+  recalculateUserCreditsUseCase: RecalculateUserCreditsUseCase;
 }
 
 async function dispose() {
@@ -40,11 +46,14 @@ async function dispose() {
 // Repositories
 const userRepository = redis ? new UserRedisRepository(redis) : new UserInMemoryRepository();
 const actionRepository = redis ? new ActionRedisRepository(redis) : new ActionInMemoryRepository();
+const creditRepository = redis ? new CreditRedisRepository(redis) : new CreditInMemoryRepository();
 
 // UseCases
 const getUserInfoUseCase = new GetUserInfoUseCase(userRepository);
 const getUserActionsUseCase = new GetUserActionsUseCase(actionRepository);
 const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository);
+const getUserCreditsUseCase = new GetUserCreditsUseCase(creditRepository);
+const recalculateUserCreditsUseCase = new RecalculateUserCreditsUseCase(creditRepository);
 
 export const container: InjectionContainer = {
   dispose,
@@ -54,4 +63,6 @@ export const container: InjectionContainer = {
   getUserInfoUseCase,
   getUserActionsUseCase,
   createUserActionUseCase,
+  getUserCreditsUseCase,
+  recalculateUserCreditsUseCase,
 };
