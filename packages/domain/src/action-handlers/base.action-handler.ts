@@ -1,10 +1,14 @@
 import type { ActionName } from '../entities';
 
 export abstract class BaseActionHandler {
-  abstract readonly name: ActionName;
+  static readonly actionName: ActionName;
 
   abstract readonly maximumCredit: number;
 
+  /**
+   * In real world cenario, execute method should be idempotent,
+   * so it can be retried in case of failure.
+   */
   abstract execute(): Promise<void>;
 
   /**

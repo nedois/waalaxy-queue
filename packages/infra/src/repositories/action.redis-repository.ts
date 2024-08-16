@@ -7,7 +7,7 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
     return `user:actions:${userId}`;
   }
 
-  private parseAction(data: string): Action {
+  static parse(data: string): Action {
     const properties = z
       .object({
         id: z.string().uuid(),
@@ -24,21 +24,15 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
   }
 
   async findByUserId(userId: string) {
-    const data = await this.redis.lrange(this.getUserActionsKey(userId), 0, -1);
-    return data.map(this.parseAction);
+    const data = await this.redis.hgetall(this.getUserActionsKey(userId));
+    return Object.values(data).map(ActionRedisRepository.parse);
   }
 
   async save(action: Action) {
-    const actions = await this.findByUserId(action.userId);
-    const actionIdx = actions.indexOf(action);
+    const actionKey = this.getUserActionsKey(action.userId);
+    const data = JSON.stringify(action);
 
-    if (actionIdx === -1) {
-      // Create if action does not exist
-      await this.redis.rpush(this.getUserActionsKey(action.userId), JSON.stringify(action));
-    } else {
-      // Update if action exists
-      await this.redis.lset(this.getUserActionsKey(action.userId), actionIdx, JSON.stringify(action));
-    }
+    await this.redis.hset(actionKey, action.id, data);
 
     return action;
   }

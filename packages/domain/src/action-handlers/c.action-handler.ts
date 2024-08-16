@@ -1,7 +1,7 @@
 import { BaseActionHandler } from './base.action-handler';
 
 export class CActionHandler extends BaseActionHandler {
-  public readonly name = 'C';
+  static actionName = 'C' as const;
 
   public readonly maximumCredit = 5;
 

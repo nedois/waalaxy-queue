@@ -19,7 +19,7 @@ export class RecalculateUserCreditsUseCase implements UseCase<Input, Output> {
     const updatedCredits = actionHandlers.map((ActionHandler) => {
       const actionHandler = new ActionHandler();
       const newCreditAmount = actionHandler.generateNewCredit();
-      const credit = credits.find((c) => c.actionName === actionHandler.name);
+      const credit = credits.find((c) => c.actionName === ActionHandler.actionName);
 
       // Create a new credit if it doesn't exist
       if (!credit) {
@@ -27,7 +27,7 @@ export class RecalculateUserCreditsUseCase implements UseCase<Input, Output> {
           id: randomUUID(),
           userId: input.userId,
           amount: newCreditAmount,
-          actionName: actionHandler.name,
+          actionName: ActionHandler.actionName,
         });
       }
 

@@ -3,6 +3,9 @@ import {
   GetUserActionsUseCase,
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
+  Notifier,
+  Queue,
+  QueueProcessor,
   RecalculateUserCreditsUseCase,
   type ActionRepository,
   type UserRepository,
@@ -12,10 +15,16 @@ import {
   ActionRedisRepository,
   CreditInMemoryRepository,
   CreditRedisRepository,
+  InMemoryQueue,
+  InMemoryQueueProcessor,
+  RedisQueue,
+  RedisQueueProcessor,
+  SSENotifier,
   UserInMemoryRepository,
   UserRedisRepository,
 } from '@repo/infra';
 import { Redis } from 'ioredis';
+import { env } from './env';
 import { redis } from './services/redis';
 
 interface InjectionContainer {
@@ -24,6 +33,11 @@ interface InjectionContainer {
 
   // Services
   redis: Redis | null;
+
+  // Domain Services
+  notifier: Notifier;
+  queueProcessor: QueueProcessor;
+  queue: Queue;
 
   // Repositories
   userRepository: UserRepository;
@@ -37,12 +51,6 @@ interface InjectionContainer {
   recalculateUserCreditsUseCase: RecalculateUserCreditsUseCase;
 }
 
-async function dispose() {
-  if (redis) {
-    await redis.quit();
-  }
-}
-
 // Repositories
 const userRepository = redis ? new UserRedisRepository(redis) : new UserInMemoryRepository();
 const actionRepository = redis ? new ActionRedisRepository(redis) : new ActionInMemoryRepository();
@@ -51,9 +59,37 @@ const creditRepository = redis ? new CreditRedisRepository(redis) : new CreditIn
 // UseCases
 const getUserInfoUseCase = new GetUserInfoUseCase(userRepository);
 const getUserActionsUseCase = new GetUserActionsUseCase(actionRepository);
-const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository);
 const getUserCreditsUseCase = new GetUserCreditsUseCase(creditRepository);
 const recalculateUserCreditsUseCase = new RecalculateUserCreditsUseCase(creditRepository);
+
+// Domain services
+const queueProcessorOptions = {
+  actionExecutionInterval: env.QUEUE_EXECUTION_INTERVAL_IN_MS,
+  renewalCreditsInterval: env.CREDITS_RENEWAL_INTERVAL_IN_MS,
+};
+
+const notifier = new SSENotifier();
+const queue = redis ? new RedisQueue(redis) : new InMemoryQueue();
+const QueueProcessorClass = redis ? RedisQueueProcessor : InMemoryQueueProcessor;
+const queueProcessor = new QueueProcessorClass(
+  queueProcessorOptions,
+  queue,
+  actionRepository,
+  creditRepository,
+  userRepository,
+  notifier,
+  recalculateUserCreditsUseCase
+);
+
+const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository, queueProcessor);
+
+async function dispose() {
+  await queueProcessor.stop();
+
+  if (redis) {
+    await redis.quit();
+  }
+}
 
 export const container: InjectionContainer = {
   dispose,
@@ -65,4 +101,7 @@ export const container: InjectionContainer = {
   createUserActionUseCase,
   getUserCreditsUseCase,
   recalculateUserCreditsUseCase,
+  queueProcessor,
+  queue,
+  notifier,
 };

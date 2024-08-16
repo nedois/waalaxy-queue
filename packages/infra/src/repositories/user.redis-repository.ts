@@ -11,8 +11,15 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
     return `user:username:${username}`;
   }
 
-  private parseUser(data: string): User {
-    const properties = z.object({ id: z.string(), username: z.string() }).parse(JSON.parse(data));
+  static parse(data: string): User {
+    const properties = z
+      .object({
+        id: z.string(),
+        username: z.string(),
+        lockedQueueAt: z.coerce.date().nullable(),
+      })
+      .parse(JSON.parse(data));
+
     return new User(properties);
   }
 
@@ -23,7 +30,7 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
       return null;
     }
 
-    return this.parseUser(data);
+    return UserRedisRepository.parse(data);
   }
 
   async findOneByUsername(username: string) {
@@ -37,10 +44,16 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
   }
 
   async find() {
-    const data = await this.redis.keys(this.getUserKey('*')).then((keys) => this.redis.mget(keys));
+    const keys = await this.redis.keys(this.getUserKey('*'));
+
+    if (!keys.length) {
+      return [];
+    }
+
+    const data = await this.redis.mget(keys);
 
     // Remove null values and return users
-    return (data.filter(Boolean) as string[]).map((user) => this.parseUser(user));
+    return (data.filter(Boolean) as string[]).map((user) => UserRedisRepository.parse(user));
   }
 
   async save(user: User) {

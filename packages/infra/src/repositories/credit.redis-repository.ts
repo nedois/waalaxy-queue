@@ -8,7 +8,7 @@ export class CreditRedisRepository extends BaseRedisRepository implements Credit
     return `user:credits:${userId}`;
   }
 
-  private parseCredit(data: string): Credit {
+  static parse(data: string): Credit {
     const properties = z
       .object({
         id: z.string().uuid(),
@@ -23,18 +23,22 @@ export class CreditRedisRepository extends BaseRedisRepository implements Credit
 
   async findByUserId(userId: string) {
     const data = await this.redis.hgetall(this.getUserCreditsKey(userId));
-    return Object.values(data).map(this.parseCredit);
+    return Object.values(data).map(CreditRedisRepository.parse);
   }
 
   async findOneByUserIdAndActionName(userId: string, actionName: ActionName) {
     const data = await this.redis.hget(this.getUserCreditsKey(userId), actionName);
     assert(data, '[ Internal Error ] Credit not found');
 
-    return this.parseCredit(data);
+    return CreditRedisRepository.parse(data);
   }
 
   async save(credit: Credit) {
-    await this.redis.hset(this.getUserCreditsKey(credit.userId), credit.actionName, JSON.stringify(credit));
+    const creditKey = this.getUserCreditsKey(credit.userId);
+    const data = JSON.stringify(credit);
+
+    await this.redis.hset(creditKey, credit.actionName, data);
+
     return credit;
   }
 

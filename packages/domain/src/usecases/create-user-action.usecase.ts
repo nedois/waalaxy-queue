@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Action, ActionName, User } from '../entities';
 import { EntityNotFoundException } from '../exceptions';
 import type { ActionRepository, UserRepository } from '../repositories';
+import { QueueProcessor } from '../services';
 import type { UseCase } from './usecase';
 
 type Input = {
@@ -13,7 +14,11 @@ type Input = {
 type Output = Action;
 
 export class CreateUserActionUseCase implements UseCase<Input, Output> {
-  constructor(private readonly actionRepository: ActionRepository, private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly actionRepository: ActionRepository,
+    private readonly userRepository: UserRepository,
+    private readonly queueProcessor: QueueProcessor
+  ) {}
 
   async execute(input: Input): Promise<Output> {
     const user = await this.userRepository.findOne(input.userId);
@@ -29,6 +34,10 @@ export class CreateUserActionUseCase implements UseCase<Input, Output> {
       runnedAt: null,
     });
 
-    return this.actionRepository.save(action);
+    await this.actionRepository.save(action);
+
+    await this.queueProcessor.enqueueAction(action);
+
+    return action;
   }
 }

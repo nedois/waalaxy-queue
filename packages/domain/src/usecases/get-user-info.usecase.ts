@@ -21,7 +21,14 @@ export class GetUserInfoUseCase implements UseCase<Input, Output> {
 
     // Create user if not found since not authentication mechanism is implemented
     if (!user) {
-      const newUser = await this.userRepository.save(new User({ id: randomUUID(), username: input.username }));
+      const newUser = new User({
+        id: randomUUID(),
+        username: input.username,
+        lockedQueueAt: null,
+      });
+
+      await this.userRepository.save(newUser);
+
       return { user: newUser, isNewUser: true };
     }
 

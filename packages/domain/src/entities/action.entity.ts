@@ -1,7 +1,7 @@
 import { BaseEntity } from './base.entity';
 
 export class Action extends BaseEntity<Action> {
-  static allowedStatuses = ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED'] as const;
+  static allowedStatuses = ['PENDING', 'RUNNING', 'COMPLETED'] as const;
 
   static allowedNames = ['A', 'B', 'C'] as const;
 
