@@ -1,11 +1,11 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
-import { ThemeProvider } from 'styled-components';
 import { QueryClientProvider } from 'react-query';
+import { ThemeProvider } from 'styled-components';
 
-import { theme, GlobalStyle } from './theme';
-import { queryClient } from './services';
+import { queryClient } from './api';
 import { App } from './app';
+import { GlobalStyle, theme } from './theme';
 
 const root = ReactDOM.createRoot(document.getElementById('root') ?? document.body);
 

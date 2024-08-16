@@ -17,8 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@repo/domain": ["packages/domain/src/index.ts"],
-      "@repo/infra": ["packages/infra/src/index.ts"],
-      "@waalaxy/contract": ["packages/contract/src/index.ts"]
+      "@repo/infra": ["packages/infra/src/index.ts"]
     },
     "strictNullChecks": true,
     "resolveJsonModule": true

@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-
 import { User } from '../entities';
 import type { UserRepository } from '../repositories';
 import type { UseCase } from './usecase';
@@ -22,7 +20,7 @@ export class GetUserInfoUseCase implements UseCase<Input, Output> {
     // Create user if not found since not authentication mechanism is implemented
     if (!user) {
       const newUser = new User({
-        id: randomUUID(),
+        id: User.generateId(),
         username: input.username,
         lockedQueueAt: null,
       });

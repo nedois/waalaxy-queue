@@ -1,8 +1,4 @@
-export interface Notification<T> {
-  type: string;
-  message: string;
-  payload?: T;
-}
+import { Notification } from '../entities';
 
 /**
  * Notifier is an abstract class that defines the interface for notifying users

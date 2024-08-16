@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { actionHandlers } from '../action-handlers';
 import { Credit } from '../entities';
 import type { CreditRepository } from '../repositories';
@@ -24,7 +23,7 @@ export class RecalculateUserCreditsUseCase implements UseCase<Input, Output> {
       // Create a new credit if it doesn't exist
       if (!credit) {
         return new Credit({
-          id: randomUUID(),
+          id: Credit.generateId(),
           userId: input.userId,
           amount: newCreditAmount,
           actionName: ActionHandler.actionName,

@@ -1,6 +1,4 @@
-import { ActionName } from '@waalaxy/contract';
-
-import { useCredits, useAddAction } from '../../services';
+import { useAddAction, useCredits } from '../../api';
 import { Flex } from '../flex';
 import { ActionButton } from './action-button';
 

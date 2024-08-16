@@ -1,5 +1,4 @@
 import assert from 'node:assert';
-import { randomUUID } from 'node:crypto';
 import { Action, ActionName, User } from '../entities';
 import { EntityNotFoundException } from '../exceptions';
 import type { ActionRepository, UserRepository } from '../repositories';
@@ -25,7 +24,7 @@ export class CreateUserActionUseCase implements UseCase<Input, Output> {
     assert(user, new EntityNotFoundException(User, input.userId));
 
     const action = new Action({
-      id: randomUUID(),
+      id: Action.generateId(),
       userId: user.id,
       name: input.name,
       status: 'PENDING',

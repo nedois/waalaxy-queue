@@ -1,14 +1,16 @@
-import { Flex } from './components/flex';
-import { ResetDatabaseButton } from './components/reset-database-button';
-import { UserQueue } from './components/user-queue';
+import { LoginForm } from './components/login-form';
+import { Flex } from './components/ui';
+import { UserCreditsTable } from './components/user-credits-table';
 
 export function App() {
   return (
-    <Flex direction="column" center gap={18} mt={32}>
-      <UserQueue userId="John" />
-      <UserQueue userId="Ana" />
-      <UserQueue userId="Pedro" />
-      <ResetDatabaseButton />
+    <Flex direction="column" center>
+      <Flex direction="column" gap={8}>
+        <h3>Choose a user to login</h3>
+        <LoginForm />
+      </Flex>
+
+      <UserCreditsTable />
     </Flex>
   );
 }

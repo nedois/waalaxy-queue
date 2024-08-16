@@ -3,6 +3,7 @@ import {
   GetUserActionsUseCase,
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
+  GetUserQueueUseCase,
   Notifier,
   Queue,
   QueueProcessor,
@@ -49,6 +50,7 @@ interface InjectionContainer {
   createUserActionUseCase: CreateUserActionUseCase;
   getUserCreditsUseCase: GetUserCreditsUseCase;
   recalculateUserCreditsUseCase: RecalculateUserCreditsUseCase;
+  getUserQueueUseCase: GetUserQueueUseCase;
 }
 
 // Repositories
@@ -82,6 +84,7 @@ const queueProcessor = new QueueProcessorClass(
 );
 
 const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository, queueProcessor);
+const getUserQueueUseCase = new GetUserQueueUseCase(queueProcessor);
 
 async function dispose() {
   await queueProcessor.stop();
@@ -101,6 +104,7 @@ export const container: InjectionContainer = {
   createUserActionUseCase,
   getUserCreditsUseCase,
   recalculateUserCreditsUseCase,
+  getUserQueueUseCase,
   queueProcessor,
   queue,
   notifier,

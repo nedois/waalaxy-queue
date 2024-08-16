@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { actionHandlers } from '../action-handlers';
-import { Action, Credit, User } from '../entities';
+import { Action, Credit, Notification, User } from '../entities';
 import { ActionRepository, CreditRepository, UserRepository } from '../repositories';
 import { RecalculateUserCreditsUseCase } from '../usecases';
 import { Notifier } from './notifier';
@@ -32,7 +32,7 @@ export abstract class QueueProcessor {
 
   constructor(
     options: QueueProcessorOptions,
-    protected readonly queue: Queue,
+    public readonly queue: Queue,
     protected readonly actionRepository: ActionRepository,
     protected readonly creditRepository: CreditRepository,
     protected readonly userRepository: UserRepository,
@@ -119,11 +119,15 @@ export abstract class QueueProcessor {
       this.userRepository.save(new User({ ...user, lockedQueueAt: null })),
     ]);
 
-    await this.notifier.realtime(action.userId, {
-      type: 'ACTION_COMPLETED',
-      message: `Action ${action.name} completed`,
-      payload: action,
-    });
+    await this.notifier.realtime(
+      action.userId,
+      new Notification({
+        id: Notification.generateId(),
+        type: 'ACTION_COMPLETED',
+        message: `Action ${action.name} completed`,
+        payload: action,
+      })
+    );
 
     await this.queue.dequeue(action.userId);
 
@@ -147,11 +151,15 @@ export abstract class QueueProcessor {
 
     await Promise.all([
       this.actionRepository.save(updatedAction),
-      this.notifier.realtime(action.userId, {
-        type: 'ACTION_RUNNING',
-        message: `Action ${action.name} is running`,
-        payload: updatedAction,
-      }),
+      this.notifier.realtime(
+        action.userId,
+        new Notification({
+          id: Notification.generateId(),
+          type: 'ACTION_RUNNING',
+          message: `Action ${action.name} is running`,
+          payload: updatedAction,
+        })
+      ),
     ]);
 
     const ActionHandler = actionHandlers.find((handler) => handler.actionName === action.name);

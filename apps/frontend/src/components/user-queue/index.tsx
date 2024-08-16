@@ -1,11 +1,11 @@
 import styled from 'styled-components';
 
+import { useSubscribeToActions } from '../../api';
 import { useCountdown } from '../../hooks/use-countdown';
-import { Timer } from './timer';
 import { Flex } from '../flex';
 import { ActionButtons } from './action-buttons';
 import { QueueContent } from './queue-content';
-import { useSubscribeToActions } from '../../services';
+import { Timer } from './timer';
 
 const Root = styled.div`
   display: flex;

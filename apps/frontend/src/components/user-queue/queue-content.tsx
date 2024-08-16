@@ -1,5 +1,5 @@
 import styled, { keyframes } from 'styled-components';
-import { useActions } from '../../services';
+import { useActions } from '../../api';
 
 const Queue = styled.div<{ status: 'pending' | 'finished' }>`
   padding: ${({ theme }) => theme.spacing.md};
