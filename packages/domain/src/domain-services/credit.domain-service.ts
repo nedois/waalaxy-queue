@@ -8,10 +8,10 @@ export class CreditDomainService {
   async recalculateUserCredits(userId: string): Promise<Credit[]> {
     const credits = await this.creditRepository.findByUserId(userId);
 
-    const updatedCredits = actionHandlers.map((ActionHandler) => {
-      const actionHandler = new ActionHandler();
+    const updatedCredits = actionHandlers.map((HandlerClass) => {
+      const actionHandler = new HandlerClass();
       const newCreditAmount = actionHandler.generateNewCredit();
-      const credit = credits.find((c) => c.actionName === ActionHandler.actionName);
+      const credit = credits.find((c) => c.actionName === HandlerClass.actionName);
 
       // Create a new credit if it doesn't exist
       if (!credit) {
@@ -19,7 +19,7 @@ export class CreditDomainService {
           userId,
           id: Credit.generateId(),
           amount: newCreditAmount,
-          actionName: ActionHandler.actionName,
+          actionName: HandlerClass.actionName,
         });
       }
 

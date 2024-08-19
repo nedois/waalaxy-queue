@@ -1,7 +1,7 @@
 import { Notifier } from '../../services/notifier';
 
 export class NotifierMock extends Notifier {
-  realtime = jest.fn<Promise<void>, Parameters<Notifier['realtime']>>();
+  realtime = jest.fn<ReturnType<Notifier['realtime']>, Parameters<Notifier['realtime']>>();
 }
 
 export const notifierMock = new NotifierMock();
