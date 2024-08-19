@@ -2,6 +2,7 @@ import { ActionsHistoryTable } from './components/actions-history-table';
 import { CreateActionButton } from './components/create-action-button';
 import { LoggedUserInfo } from './components/logged-user-info';
 import { LoginForm } from './components/login-form';
+import { PageLoader } from './components/page-loader';
 import { Flex } from './components/ui';
 import { UserCreditsTable } from './components/user-credits-table';
 import { UserQueue } from './components/user-queue';
@@ -11,7 +12,7 @@ export function App() {
   const loading = useBootstrapApp();
 
   if (loading) {
-    return null;
+    return <PageLoader />;
   }
 
   return (
@@ -27,6 +28,7 @@ export function App() {
         <CreateActionButton actionName="B" />
         <CreateActionButton actionName="C" />
       </Flex>
+
       <UserQueue />
       <UserCreditsTable />
       <ActionsHistoryTable />
