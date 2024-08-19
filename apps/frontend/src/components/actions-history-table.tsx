@@ -8,20 +8,24 @@ export function ActionsHistoryTable() {
   return (
     <Table>
       <TableCaption>Actions history</TableCaption>
-      <TableRow>
-        <TableHeader>Name</TableHeader>
-        <TableHeader>Status</TableHeader>
-        <TableHeader>Created at</TableHeader>
-        <TableHeader>Runned at</TableHeader>
-      </TableRow>
-      {data?.map((action) => (
-        <TableRow key={action.id}>
-          <TableCell>{action.name}</TableCell>
-          <TableCell>{formatActionStatus(action.status)}</TableCell>
-          <TableCell>{formatDate(action.createdAt)}</TableCell>
-          <TableCell>{action.runnedAt ? formatDate(action.runnedAt) : '-'}</TableCell>
+      <thead>
+        <TableRow>
+          <TableHeader>Name</TableHeader>
+          <TableHeader>Status</TableHeader>
+          <TableHeader>Created at</TableHeader>
+          <TableHeader>Runned at</TableHeader>
         </TableRow>
-      ))}
+      </thead>
+      <tbody>
+        {data?.map((action) => (
+          <TableRow key={action.id}>
+            <TableCell>{action.name}</TableCell>
+            <TableCell>{formatActionStatus(action.status)}</TableCell>
+            <TableCell>{formatDate(action.createdAt)}</TableCell>
+            <TableCell>{action.runnedAt ? formatDate(action.runnedAt) : '-'}</TableCell>
+          </TableRow>
+        ))}
+      </tbody>
     </Table>
   );
 }

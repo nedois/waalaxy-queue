@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "lib": ["esnext", "dom"],
+    "lib": ["dom", "esnext"],
     "outDir": "../../dist/out-tsc",
     "types": ["@nx/react/typings/cssmodule.d.ts", "@nx/react/typings/image.d.ts", "vite/client"]
   },
