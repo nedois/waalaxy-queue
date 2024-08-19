@@ -8,6 +8,7 @@ import { queueMock } from './queue.mock';
 
 export class QueueProcessorMock extends QueueProcessor {
   prepareUserQueues = jest.fn<Promise<void>, Parameters<QueueProcessor['prepareUserQueues']>>();
+  enqueueAction = jest.fn<Promise<void>, Parameters<QueueProcessor['enqueueAction']>>();
 }
 
 export const queueProcessorMock = new QueueProcessorMock(
