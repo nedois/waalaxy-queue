@@ -1,9 +1,7 @@
-import { creditRepositoryMock } from '../__mocks__/repositories/credit-repository.mock';
+import { creditRepositoryMock } from '../__mocks__/repositories';
 import { actionHandlers } from '../action-handlers';
 import { Credit } from '../entities';
 import { CreditDomainService } from './credit.domain-service';
-
-jest.mock('../repositories');
 
 describe('CreditDomainService', () => {
   const userId = 'user-id';

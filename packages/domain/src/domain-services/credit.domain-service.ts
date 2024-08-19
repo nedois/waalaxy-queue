@@ -1,6 +1,6 @@
 import { actionHandlers } from '../action-handlers';
 import { Credit } from '../entities';
-import { CreditRepository } from '../repositories';
+import type { CreditRepository } from '../repositories';
 
 export class CreditDomainService {
   constructor(private readonly creditRepository: CreditRepository) {}
