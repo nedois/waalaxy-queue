@@ -25,6 +25,12 @@ export function ActionsHistoryTable() {
             <TableCell>{action.runnedAt ? formatDate(action.runnedAt) : '-'}</TableCell>
           </TableRow>
         ))}
+
+        {!data?.length && (
+          <TableRow>
+            <TableCell colSpan={4}>No actions found</TableCell>
+          </TableRow>
+        )}
       </tbody>
     </Table>
   );

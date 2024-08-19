@@ -3,6 +3,7 @@ import type { ButtonProps } from './button.types';
 
 export const ButtonRoot = styled.button<ButtonProps>`
   display: flex;
+  height: fit-content;
   gap: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.primary.contrast};
   background-color: ${({ theme }) => theme.colors.primary.main};
