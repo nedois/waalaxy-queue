@@ -32,7 +32,7 @@ export abstract class QueueProcessor {
 
   constructor(
     options: QueueProcessorOptions,
-    public readonly queue: Queue,
+    protected readonly queue: Queue,
     protected readonly actionRepository: ActionRepository,
     protected readonly creditRepository: CreditRepository,
     protected readonly userRepository: UserRepository,
@@ -70,6 +70,10 @@ export abstract class QueueProcessor {
     }
 
     this.clearTimeouts();
+  }
+
+  async getUserQueue(userId: string) {
+    return this.queue.peek(userId);
   }
 
   /**

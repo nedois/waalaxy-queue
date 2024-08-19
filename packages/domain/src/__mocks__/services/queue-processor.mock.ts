@@ -7,8 +7,12 @@ import { notifierMock } from './notifier.mock';
 import { queueMock } from './queue.mock';
 
 export class QueueProcessorMock extends QueueProcessor {
-  prepareUserQueues = jest.fn<Promise<void>, Parameters<QueueProcessor['prepareUserQueues']>>();
-  enqueueAction = jest.fn<Promise<void>, Parameters<QueueProcessor['enqueueAction']>>();
+  getUserQueue = jest.fn<ReturnType<QueueProcessor['getUserQueue']>, Parameters<QueueProcessor['getUserQueue']>>();
+  enqueueAction = jest.fn<ReturnType<QueueProcessor['enqueueAction']>, Parameters<QueueProcessor['enqueueAction']>>();
+  prepareUserQueues = jest.fn<
+    ReturnType<QueueProcessor['prepareUserQueues']>,
+    Parameters<QueueProcessor['prepareUserQueues']>
+  >();
 }
 
 export const queueProcessorMock = new QueueProcessorMock(

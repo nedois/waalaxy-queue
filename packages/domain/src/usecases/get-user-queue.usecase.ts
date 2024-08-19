@@ -12,6 +12,6 @@ export class GetUserQueueUseCase implements UseCase<Input, Output> {
   constructor(private readonly queueProcessor: QueueProcessor) {}
 
   async execute(input: Input): Promise<Output> {
-    return this.queueProcessor.queue.peek(input.userId);
+    return this.queueProcessor.getUserQueue(input.userId);
   }
 }
