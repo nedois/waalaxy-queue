@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
   useCountdown,
   useNextActionStartTime,
@@ -31,6 +31,11 @@ export function UserQueue() {
       }
     },
   });
+
+  useEffect(() => {
+    resetCountdown(nextActionStartsAt);
+    startCountdown();
+  }, [nextActionStartsAt]);
 
   return (
     <QueueRoot>

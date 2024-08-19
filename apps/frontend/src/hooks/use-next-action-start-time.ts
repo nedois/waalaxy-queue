@@ -12,5 +12,5 @@ export function useNextActionStartTime() {
   const elapsedTime = new Date().getTime() - user.lastActionExecutedAt.getTime();
   const nextActionIn = QUEUE_EXECUTION_INTERVAL_IN_MS - elapsedTime;
 
-  return Math.max(nextActionIn, 0) / 1000;
+  return Math.floor(Math.max(nextActionIn, 0) / 1000);
 }
