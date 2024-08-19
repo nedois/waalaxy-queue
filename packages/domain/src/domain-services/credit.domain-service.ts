@@ -1,19 +1,12 @@
 import { actionHandlers } from '../action-handlers';
 import { Credit } from '../entities';
-import type { CreditRepository } from '../repositories';
-import type { UseCase } from './usecase';
+import { CreditRepository } from '../repositories';
 
-type Input = {
-  userId: string;
-};
-
-type Output = Credit[];
-
-export class RecalculateUserCreditsUseCase implements UseCase<Input, Output> {
+export class CreditDomainService {
   constructor(private readonly creditRepository: CreditRepository) {}
 
-  async execute(input: Input): Promise<Output> {
-    const credits = await this.creditRepository.findByUserId(input.userId);
+  async recalculateUserCredits(userId: string): Promise<Credit[]> {
+    const credits = await this.creditRepository.findByUserId(userId);
 
     const updatedCredits = actionHandlers.map((ActionHandler) => {
       const actionHandler = new ActionHandler();
@@ -23,8 +16,8 @@ export class RecalculateUserCreditsUseCase implements UseCase<Input, Output> {
       // Create a new credit if it doesn't exist
       if (!credit) {
         return new Credit({
+          userId,
           id: Credit.generateId(),
-          userId: input.userId,
           amount: newCreditAmount,
           actionName: ActionHandler.actionName,
         });

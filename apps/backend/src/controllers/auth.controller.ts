@@ -12,7 +12,7 @@ controller.post('/auth/login', async (request, response) => {
   if (isNewUser) {
     // Recalculate user credits if new user is created
     // normally this would be done in signup handler
-    await container.recalculateUserCreditsUseCase.execute({ userId: user.id });
+    await container.creditDomainService.recalculateUserCredits(user.id);
   }
 
   response.status(200).send({ token: user.id });

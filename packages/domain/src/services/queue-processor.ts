@@ -1,8 +1,8 @@
 import assert from 'node:assert';
 import { actionHandlers } from '../action-handlers';
+import { CreditDomainService } from '../domain-services';
 import { Action, Notification, User } from '../entities';
 import { ActionRepository, CreditRepository, UserRepository } from '../repositories';
-import { RecalculateUserCreditsUseCase } from '../usecases';
 import { Notifier } from './notifier';
 import { Queue } from './queue';
 
@@ -37,7 +37,7 @@ export abstract class QueueProcessor {
     protected readonly creditRepository: CreditRepository,
     protected readonly userRepository: UserRepository,
     protected readonly notifier: Notifier,
-    protected readonly recalculateUserCreditsUseCase: RecalculateUserCreditsUseCase
+    protected readonly creditDomainService: CreditDomainService
   ) {
     this.RENEWAL_CREDITS_INTERVAL = options.renewalCreditsInterval;
     this.ACTION_EXECUTION_INTERVAL = options.actionExecutionInterval;
@@ -253,7 +253,7 @@ export abstract class QueueProcessor {
     // of chunking the users for simplicity
     this.renewalCreditsInterval = setInterval(async () => {
       const users = await this.userRepository.find();
-      await Promise.all(users.map((user) => this.recalculateUserCreditsUseCase.execute({ userId: user.id })));
+      await Promise.all(users.map((user) => this.creditDomainService.recalculateUserCredits(user.id)));
       await Promise.all(users.map((user) => this.scheduleNextAction(user.id)));
     }, this.RENEWAL_CREDITS_INTERVAL);
   }

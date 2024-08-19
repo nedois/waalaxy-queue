@@ -9,3 +9,5 @@ export class UserRepositoryMock implements UserRepository {
     Parameters<UserRepository['findOneByUsername']>
   >();
 }
+
+export const userRepositoryMock = new UserRepositoryMock();

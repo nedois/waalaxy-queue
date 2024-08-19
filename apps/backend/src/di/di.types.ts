@@ -1,5 +1,6 @@
 import {
   CreateUserActionUseCase,
+  CreditDomainService,
   GetUserActionsUseCase,
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
@@ -7,7 +8,6 @@ import {
   Notifier,
   Queue,
   QueueProcessor,
-  RecalculateUserCreditsUseCase,
   type ActionRepository,
   type UserRepository,
 } from '@repo/domain';
@@ -19,11 +19,12 @@ export interface InjectionContainer {
 
   // Services
   redis: Redis | null;
-
-  // Domain Services
   notifier: Notifier;
   queueProcessor: QueueProcessor;
   queue: Queue;
+
+  // Domain Services
+  creditDomainService: CreditDomainService;
 
   // Repositories
   userRepository: UserRepository;
@@ -34,6 +35,5 @@ export interface InjectionContainer {
   getUserActionsUseCase: GetUserActionsUseCase;
   createUserActionUseCase: CreateUserActionUseCase;
   getUserCreditsUseCase: GetUserCreditsUseCase;
-  recalculateUserCreditsUseCase: RecalculateUserCreditsUseCase;
   getUserQueueUseCase: GetUserQueueUseCase;
 }

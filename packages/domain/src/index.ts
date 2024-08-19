@@ -1,4 +1,5 @@
 export * from './action-handlers';
+export * from './domain-services';
 export * from './entities';
 export * from './exceptions';
 export * from './repositories';

@@ -6,3 +6,5 @@ export class QueueMock extends Queue {
   remove = jest.fn<Promise<void>, Parameters<Queue['remove']>>();
   peek = jest.fn<Promise<Action[]>, Parameters<Queue['peek']>>();
 }
+
+export const queueMock = new QueueMock();

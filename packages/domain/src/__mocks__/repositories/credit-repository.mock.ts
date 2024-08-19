@@ -9,3 +9,5 @@ export class CreditRepositoryMock implements CreditRepository {
     Parameters<CreditRepository['findOneByUserIdAndActionName']>
   >();
 }
+
+export const creditRepositoryMock = new CreditRepositoryMock();

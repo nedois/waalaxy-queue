@@ -1,10 +1,10 @@
 import {
   CreateUserActionUseCase,
+  CreditDomainService,
   GetUserActionsUseCase,
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
   GetUserQueueUseCase,
-  RecalculateUserCreditsUseCase,
 } from '@repo/domain';
 import {
   ActionInMemoryRepository,
@@ -38,7 +38,7 @@ const notifier = new SSENotifier();
 const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository);
 const QueueProcessorClass = redis ? RedisQueueProcessor : InMemoryQueueProcessor;
 
-const recalculateUserCreditsUseCase = new RecalculateUserCreditsUseCase(creditRepository);
+const creditDomainService = new CreditDomainService(creditRepository);
 const queueProcessor = new QueueProcessorClass(
   queueProcessorOptions,
   queue,
@@ -46,7 +46,7 @@ const queueProcessor = new QueueProcessorClass(
   creditRepository,
   userRepository,
   notifier,
-  recalculateUserCreditsUseCase
+  creditDomainService
 );
 
 // UseCases
@@ -73,7 +73,7 @@ export const container: InjectionContainer = {
   getUserActionsUseCase,
   createUserActionUseCase,
   getUserCreditsUseCase,
-  recalculateUserCreditsUseCase,
+  creditDomainService,
   getUserQueueUseCase,
   queueProcessor,
   queue,

@@ -5,3 +5,5 @@ export class ActionRepositoryMock implements ActionRepository {
   findMany = jest.fn<ReturnType<ActionRepository['findMany']>, Parameters<ActionRepository['findMany']>>();
   save = jest.fn<ReturnType<ActionRepository['save']>, Parameters<ActionRepository['save']>>();
 }
+
+export const actionRepositoryMock = new ActionRepositoryMock();
