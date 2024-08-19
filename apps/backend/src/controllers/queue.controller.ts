@@ -1,5 +1,5 @@
 import express from 'express';
-import { container } from '../injection-container';
+import { container } from '../di';
 import { authMiddleware } from '../middlewares';
 
 const controller = express.Router();

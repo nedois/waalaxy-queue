@@ -1,8 +1,8 @@
 import express from 'express';
 
 import { bootstrap } from './bootstrap';
+import { container } from './di/injection-container';
 import { env } from './env';
-import { container } from './injection-container';
 
 const host = env.HOST;
 const port = env.PORT;

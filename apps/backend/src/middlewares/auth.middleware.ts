@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { container } from '../injection-container';
+import { container } from '../di';
 
 /**
  * Fake authentication middleware, just for demonstration purposes.

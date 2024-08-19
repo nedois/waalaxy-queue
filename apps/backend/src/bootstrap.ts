@@ -4,7 +4,7 @@ import cors from 'cors';
 import express, { Express } from 'express';
 
 import { controllers } from './controllers';
-import { container } from './injection-container';
+import { container } from './di/injection-container';
 import * as middlewares from './middlewares';
 
 /**

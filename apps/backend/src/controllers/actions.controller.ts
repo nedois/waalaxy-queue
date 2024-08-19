@@ -1,6 +1,6 @@
 import express from 'express';
+import { container } from '../di';
 import { CreateActionDtoSchema } from '../dtos';
-import { container } from '../injection-container';
 import { authMiddleware } from '../middlewares';
 
 const controller = express.Router();

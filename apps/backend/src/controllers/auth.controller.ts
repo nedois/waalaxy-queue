@@ -1,6 +1,6 @@
 import express from 'express';
+import { container } from '../di';
 import { LoginDtoSchema } from '../dtos';
-import { container } from '../injection-container';
 
 const controller = express.Router();
 

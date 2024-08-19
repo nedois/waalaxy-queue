@@ -4,12 +4,7 @@ import {
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
   GetUserQueueUseCase,
-  Notifier,
-  Queue,
-  QueueProcessor,
   RecalculateUserCreditsUseCase,
-  type ActionRepository,
-  type UserRepository,
 } from '@repo/domain';
 import {
   ActionInMemoryRepository,
@@ -24,45 +19,14 @@ import {
   UserInMemoryRepository,
   UserRedisRepository,
 } from '@repo/infra';
-import { Redis } from 'ioredis';
-import { env } from './env';
-import { redis } from './services/redis';
-
-interface InjectionContainer {
-  // Disconnect services and clean up resources
-  dispose(): Promise<void>;
-
-  // Services
-  redis: Redis | null;
-
-  // Domain Services
-  notifier: Notifier;
-  queueProcessor: QueueProcessor;
-  queue: Queue;
-
-  // Repositories
-  userRepository: UserRepository;
-  actionRepository: ActionRepository;
-
-  // UseCases
-  getUserInfoUseCase: GetUserInfoUseCase;
-  getUserActionsUseCase: GetUserActionsUseCase;
-  createUserActionUseCase: CreateUserActionUseCase;
-  getUserCreditsUseCase: GetUserCreditsUseCase;
-  recalculateUserCreditsUseCase: RecalculateUserCreditsUseCase;
-  getUserQueueUseCase: GetUserQueueUseCase;
-}
+import { env } from '../env';
+import { redis } from '../services/redis';
+import { InjectionContainer } from './di.types';
 
 // Repositories
 const userRepository = redis ? new UserRedisRepository(redis) : new UserInMemoryRepository();
 const actionRepository = redis ? new ActionRedisRepository(redis) : new ActionInMemoryRepository();
 const creditRepository = redis ? new CreditRedisRepository(redis) : new CreditInMemoryRepository();
-
-// UseCases
-const getUserInfoUseCase = new GetUserInfoUseCase(userRepository);
-const getUserActionsUseCase = new GetUserActionsUseCase(actionRepository);
-const getUserCreditsUseCase = new GetUserCreditsUseCase(creditRepository);
-const recalculateUserCreditsUseCase = new RecalculateUserCreditsUseCase(creditRepository);
 
 // Domain services
 const queueProcessorOptions = {
@@ -73,6 +37,8 @@ const queueProcessorOptions = {
 const notifier = new SSENotifier();
 const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository);
 const QueueProcessorClass = redis ? RedisQueueProcessor : InMemoryQueueProcessor;
+
+const recalculateUserCreditsUseCase = new RecalculateUserCreditsUseCase(creditRepository);
 const queueProcessor = new QueueProcessorClass(
   queueProcessorOptions,
   queue,
@@ -83,6 +49,10 @@ const queueProcessor = new QueueProcessorClass(
   recalculateUserCreditsUseCase
 );
 
+// UseCases
+const getUserInfoUseCase = new GetUserInfoUseCase(userRepository);
+const getUserActionsUseCase = new GetUserActionsUseCase(actionRepository);
+const getUserCreditsUseCase = new GetUserCreditsUseCase(creditRepository);
 const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository, queueProcessor);
 const getUserQueueUseCase = new GetUserQueueUseCase(queueProcessor);
 
