@@ -9,11 +9,13 @@ export class ActionInMemoryRepository implements ActionRepository {
   }
 
   findMany(actionIds: string[]) {
-    return actionIds.map((actionId) => {
+    const actions = actionIds.map((actionId) => {
       const action = database.get(actionId);
       assert(action, new EntityNotFoundException(Action, actionId));
       return action;
     });
+
+    return actions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   save(action: Action) {

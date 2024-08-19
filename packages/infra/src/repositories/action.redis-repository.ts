@@ -29,7 +29,8 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
 
   async findByUserId(userId: string) {
     const actionsIds = await this.redis.smembers(this.getUserActionsKey(userId));
-    return this.findMany(actionsIds);
+    const actions = await this.findMany(actionsIds);
+    return actions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async findMany(actionIds: string[]) {
