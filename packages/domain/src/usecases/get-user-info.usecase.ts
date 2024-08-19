@@ -23,6 +23,7 @@ export class GetUserInfoUseCase implements UseCase<Input, Output> {
         id: User.generateId(),
         username: input.username,
         lockedQueueAt: null,
+        lastActionExecutedAt: null,
       });
 
       await this.userRepository.save(newUser);

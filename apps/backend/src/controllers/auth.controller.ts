@@ -15,7 +15,7 @@ controller.post('/auth/login', async (request, response) => {
     await container.recalculateUserCreditsUseCase.execute({ userId: user.id });
   }
 
-  response.status(200).send(user);
+  response.status(200).send({ token: user.id });
 });
 
 export default controller;

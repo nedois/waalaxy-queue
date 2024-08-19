@@ -12,7 +12,7 @@ export function useLogout() {
       }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries();
+        queryClient.resetQueries();
       },
     }
   );

@@ -17,6 +17,7 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
         id: z.string(),
         username: z.string(),
         lockedQueueAt: z.coerce.date().nullable(),
+        lastActionExecutedAt: z.coerce.date().nullable(),
       })
       .parse(JSON.parse(data));
 

@@ -6,7 +6,7 @@ export class AActionHandler extends BaseActionHandler {
   public readonly maximumCredit = 10;
 
   async execute() {
-    const FAKE_EXECTION_TIME = 2000; // 2 seconds
+    const FAKE_EXECTION_TIME = 6000; // 6 seconds
     await this.sleep(FAKE_EXECTION_TIME);
   }
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { actionHandlers } from '../action-handlers';
-import { Action, Credit, Notification, User } from '../entities';
+import { Action, Notification, User } from '../entities';
 import { ActionRepository, CreditRepository, UserRepository } from '../repositories';
 import { RecalculateUserCreditsUseCase } from '../usecases';
 import { Notifier } from './notifier';
@@ -113,10 +113,14 @@ export abstract class QueueProcessor {
 
     assert(user, '[ Internal Error ] User not found');
 
+    credit.amount -= 1;
+    action.status = 'COMPLETED';
+    user.lockedQueueAt = null;
+
     await Promise.all([
-      this.actionRepository.save(new Action({ ...action, status: 'COMPLETED', updatedAt: new Date() })),
-      this.creditRepository.save(new Credit({ ...credit, amount: credit.amount - 1 })),
-      this.userRepository.save(new User({ ...user, lockedQueueAt: null })),
+      this.actionRepository.save(action),
+      this.creditRepository.save(credit),
+      this.userRepository.save(user),
     ]);
 
     await this.notifier.realtime(
@@ -129,7 +133,7 @@ export abstract class QueueProcessor {
       })
     );
 
-    await this.queue.dequeue(action.userId);
+    await this.queue.remove(action);
 
     // Schedule the next action
     await this.scheduleNextAction(action.userId);
@@ -141,23 +145,21 @@ export abstract class QueueProcessor {
    * - Update the action status to 'RUNNING'
    * - Execute the action handler
    */
-  protected async executeAction(action: Action) {
-    const updatedAction = new Action({
-      ...action,
-      status: 'RUNNING',
-      runnedAt: new Date(),
-      updatedAt: new Date(),
-    });
+  protected async executeAction(action: Action, user: User) {
+    action.status = 'RUNNING';
+    action.runnedAt = new Date();
+    user.lastActionExecutedAt = new Date();
 
     await Promise.all([
-      this.actionRepository.save(updatedAction),
+      this.userRepository.save(user),
+      this.actionRepository.save(action),
       this.notifier.realtime(
         action.userId,
         new Notification({
           id: Notification.generateId(),
           type: 'ACTION_RUNNING',
           message: `Action ${action.name} is running`,
-          payload: updatedAction,
+          payload: action,
         })
       ),
     ]);
@@ -167,7 +169,7 @@ export abstract class QueueProcessor {
 
     await new ActionHandler().execute();
 
-    await this.onActionCompleted(updatedAction);
+    await this.onActionCompleted(action);
   }
 
   /** Schedule the next action to run in the next ACTION_EXECUTION_INTERVAL */
@@ -198,15 +200,12 @@ export abstract class QueueProcessor {
 
     // Lock the user to avoid processing workers to execute the same
     // action queue at the same time
-    await this.userRepository.save(new User({ ...user, lockedQueueAt: new Date() }));
+    user.lockedQueueAt = new Date();
+    await this.userRepository.save(user);
 
-    // If is the first action, we'll execute it immediately
-    const isFirstAction = !this.queueTimeouts.has(userId);
-
-    const timeout = setTimeout(
-      () => this.executeAction(nextAction),
-      isFirstAction ? 0 : this.ACTION_EXECUTION_INTERVAL
-    );
+    // Get the execution time for the next action
+    // and execute the action after the time has passed
+    const timeout = setTimeout(() => this.executeAction(nextAction, user), this.calculateNextActionExecutionTime(user));
 
     // Save the timeout to clear it later
     this.queueTimeouts.set(userId, timeout);
@@ -241,7 +240,8 @@ export abstract class QueueProcessor {
     const elapsedTime = new Date().getTime() - user.lockedQueueAt.getTime();
 
     if (elapsedTime > this.QUEUE_LOCK_THRESHOLD) {
-      await this.userRepository.save(new User({ ...user, lockedQueueAt: null }));
+      user.lockedQueueAt = null;
+      await this.userRepository.save(user);
     }
 
     return user;
@@ -254,6 +254,21 @@ export abstract class QueueProcessor {
     this.renewalCreditsInterval = setInterval(async () => {
       const users = await this.userRepository.find();
       await Promise.all(users.map((user) => this.recalculateUserCreditsUseCase.execute({ userId: user.id })));
+      await Promise.all(users.map((user) => this.scheduleNextAction(user.id)));
     }, this.RENEWAL_CREDITS_INTERVAL);
+  }
+
+  /**
+   * Calculate the next action execution time based on the user's
+   * last action executed time and the action execution interval.
+   */
+  private calculateNextActionExecutionTime(user: User) {
+    if (!user.lastActionExecutedAt) {
+      return 0;
+    }
+
+    const elapsedTime = new Date().getTime() - user.lastActionExecutedAt.getTime();
+    const nextActionIn = this.ACTION_EXECUTION_INTERVAL - elapsedTime;
+    return Math.floor(Math.max(nextActionIn, 0));
   }
 }

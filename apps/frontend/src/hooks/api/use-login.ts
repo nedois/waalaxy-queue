@@ -6,7 +6,7 @@ export function useLogin() {
 
   return useMutation((username: string) => login(username), {
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.resetQueries();
     },
   });
 }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ACCESS_TOKEN_KEY } from '../constants';
 import { env } from '../env';
 
 export const axiosInstance = axios.create({
@@ -11,6 +12,7 @@ export const axiosInstance = axios.create({
 
 export function setAuthorizationHeader(token: string) {
   axiosInstance.defaults.headers.Authorization = `Bearer ${token}`;
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
 }
 
 export function removeAuthorizationHeader() {

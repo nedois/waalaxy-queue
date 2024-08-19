@@ -8,6 +8,7 @@ export function useCreateUserAction() {
   return useMutation((actionName: Action['name']) => createUserAction(actionName), {
     onSuccess: () => {
       queryClient.invalidateQueries(['actions']);
+      queryClient.invalidateQueries(['queue']);
     },
   });
 }

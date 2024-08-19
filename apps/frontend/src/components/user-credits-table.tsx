@@ -1,5 +1,5 @@
 import { useUserCredits } from '../hooks';
-import { Table, TableCaption, TableCell, TableHeader, TableRow } from './table/table.styles';
+import { Table, TableCaption, TableCell, TableHeader, TableRow } from './ui';
 
 export function UserCreditsTable() {
   const { data } = useUserCredits();

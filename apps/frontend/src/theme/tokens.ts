@@ -11,6 +11,11 @@ export const theme: DefaultTheme = {
       main: '#eff0f6',
       darker: '#e0e0e0',
     },
+    error: {
+      main: '#f44336',
+      darker: '#d32f2f',
+      contrast: '#ffffff',
+    },
   },
   spacing: {
     xs: '4px',

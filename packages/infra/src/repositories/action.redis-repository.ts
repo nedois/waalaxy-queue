@@ -7,6 +7,10 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
     return `user:actions:${userId}`;
   }
 
+  private getActionsKey() {
+    return 'actions';
+  }
+
   static parse(data: string): Action {
     const properties = z
       .object({
@@ -24,15 +28,28 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
   }
 
   async findByUserId(userId: string) {
-    const data = await this.redis.hgetall(this.getUserActionsKey(userId));
-    return Object.values(data).map(ActionRedisRepository.parse);
+    const actionsIds = await this.redis.smembers(this.getUserActionsKey(userId));
+    return this.findMany(actionsIds);
+  }
+
+  async findMany(actionIds: string[]) {
+    if (!actionIds.length) {
+      return [];
+    }
+
+    const actions = await this.redis.hmget(this.getActionsKey(), ...actionIds);
+    return actions.map(ActionRedisRepository.parse);
   }
 
   async save(action: Action) {
-    const actionKey = this.getUserActionsKey(action.userId);
+    action.updatedAt = new Date();
+
     const data = JSON.stringify(action);
 
-    await this.redis.hset(actionKey, action.id, data);
+    await Promise.all([
+      this.redis.hset(this.getActionsKey(), action.id, data),
+      this.redis.sadd(this.getUserActionsKey(action.userId), action.id),
+    ]);
 
     return action;
   }

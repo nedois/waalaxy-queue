@@ -31,7 +31,9 @@ export class RecalculateUserCreditsUseCase implements UseCase<Input, Output> {
       }
 
       // Update the existing credit
-      return new Credit({ ...credit, amount: newCreditAmount });
+      credit.amount = newCreditAmount;
+
+      return credit;
     });
 
     return this.creditRepository.saveMany(updatedCredits);

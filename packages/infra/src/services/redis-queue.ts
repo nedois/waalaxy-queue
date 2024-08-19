@@ -1,32 +1,30 @@
-import { Action, Queue } from '@repo/domain';
+import { Action, Queue, type ActionRepository } from '@repo/domain';
 import { Redis } from 'ioredis';
-import { ActionRedisRepository } from '../repositories';
+import assert from 'node:assert';
 
 export class RedisQueue extends Queue {
-  constructor(private readonly redis: Redis) {
+  constructor(private readonly redis: Redis, private readonly actionRepository: ActionRepository) {
     super();
   }
 
   private getUserQueueKey(userId: string) {
-    return `queue:${userId}`;
+    return `user:queue:${userId}`;
   }
 
   async enqueue(action: Action) {
     const queueKey = this.getUserQueueKey(action.userId);
-    const data = JSON.stringify(action);
-
-    await this.redis.rpush(queueKey, data);
+    await this.redis.rpush(queueKey, action.id);
   }
 
-  async dequeue(userId: string) {
-    const queueKey = this.getUserQueueKey(userId);
-    await this.redis.lpop(queueKey);
+  async remove(action: Action) {
+    assert(action.status === 'COMPLETED', `[ Internal error ] Action status must be COMPLETED`);
+    const queueKey = this.getUserQueueKey(action.userId);
+    await this.redis.lrem(queueKey, 1, action.id);
   }
 
   async peek(userId: string) {
     const queueKey = this.getUserQueueKey(userId);
-    const data = await this.redis.lrange(queueKey, 0, -1);
-
-    return data.map(ActionRedisRepository.parse);
+    const actionsIds = await this.redis.lrange(queueKey, 0, -1);
+    return this.actionRepository.findMany(actionsIds);
   }
 }

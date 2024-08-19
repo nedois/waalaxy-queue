@@ -71,7 +71,7 @@ const queueProcessorOptions = {
 };
 
 const notifier = new SSENotifier();
-const queue = redis ? new RedisQueue(redis) : new InMemoryQueue();
+const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository);
 const QueueProcessorClass = redis ? RedisQueueProcessor : InMemoryQueueProcessor;
 const queueProcessor = new QueueProcessorClass(
   queueProcessorOptions,

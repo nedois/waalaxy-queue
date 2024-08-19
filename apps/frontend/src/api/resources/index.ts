@@ -1,3 +1,4 @@
+export * from './account';
 export * from './actions';
 export * from './auth';
 export * from './credits';

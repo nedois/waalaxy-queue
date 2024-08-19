@@ -6,16 +6,7 @@ export const Table = styled.table`
 
 export const TableRow = styled.tr`
   border: 1px solid ${({ theme }) => theme.colors.primary.main};
-
-  &:first-child {
-    border-top-left-radius: ${({ theme }) => theme.radius.md};
-    border-top-right-radius: ${({ theme }) => theme.radius.md};
-  }
-
-  &:last-child {
-    border-bottom-left-radius: ${({ theme }) => theme.radius.md};
-    border-bottom-right-radius: ${({ theme }) => theme.radius.md};
-  }
+  border-radius: ${({ theme }) => theme.radius.md};
 `;
 
 export const TableHeader = styled.th`

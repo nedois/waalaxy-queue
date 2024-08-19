@@ -3,7 +3,7 @@ import { Action } from '../entities';
 
 export async function getUserActions() {
   const response = await axiosInstance.get<Action[]>('/actions');
-  return Action.parse(response.data);
+  return response.data.map((action) => Action.parse(action));
 }
 
 export async function createUserAction(actionName: Action['name']) {

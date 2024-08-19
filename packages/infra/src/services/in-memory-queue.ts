@@ -1,21 +1,30 @@
-import { Action, Queue } from '@repo/domain';
+import { Action, Queue, type ActionRepository } from '@repo/domain';
+import assert from 'node:assert';
 
-const queues = new Map<string, Action[]>();
+const queues = new Map<string, string[]>();
 
 export class InMemoryQueue extends Queue {
+  constructor(private readonly actionRepository: ActionRepository) {
+    super();
+  }
+
   enqueue(action: Action) {
     const queue = queues.get(action.userId) ?? [];
-    queue.push(action);
+    queue.push(action.id);
     queues.set(action.userId, queue);
   }
 
-  dequeue(userId: string) {
-    const queue = queues.get(userId) ?? [];
-    queue.shift();
-    queues.set(userId, queue);
+  remove(action: Action) {
+    assert(action.status === 'COMPLETED', `[ Internal error ] Action status must be COMPLETED`);
+    const queue = queues.get(action.userId) ?? [];
+    const index = queue.indexOf(action.id);
+    if (index !== -1) {
+      queue.splice(index, 1);
+    }
   }
 
   peek(userId: string) {
-    return queues.get(userId) ?? [];
+    const actionIds = queues.get(userId) ?? [];
+    return this.actionRepository.findMany(actionIds);
   }
 }

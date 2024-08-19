@@ -12,6 +12,11 @@ declare module 'styled-components' {
         main: string;
         darker: string;
       };
+      error: {
+        main: string;
+        darker: string;
+        contrast: string;
+      };
     };
 
     spacing: {
