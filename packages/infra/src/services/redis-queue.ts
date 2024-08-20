@@ -1,4 +1,4 @@
-import { Action, Queue, type ActionRepository } from '@repo/domain';
+import { Action, InvalidActionStatusException, Queue, type ActionRepository } from '@repo/domain';
 import { Redis } from 'ioredis';
 import assert from 'node:assert';
 
@@ -7,23 +7,24 @@ export class RedisQueue extends Queue {
     super();
   }
 
-  private getUserQueueKey(userId: string) {
+  static getUserQueueKey(userId: string) {
     return `user:queue:${userId}`;
   }
 
   async enqueue(action: Action) {
-    const queueKey = this.getUserQueueKey(action.userId);
+    assert(action.status === 'PENDING', new InvalidActionStatusException(action.status, 'PENDING'));
+    const queueKey = RedisQueue.getUserQueueKey(action.userId);
     await this.redis.rpush(queueKey, action.id);
   }
 
   async remove(action: Action) {
-    assert(action.status === 'COMPLETED', `[ Internal Error ] Action status must be COMPLETED`);
-    const queueKey = this.getUserQueueKey(action.userId);
+    assert(action.status === 'COMPLETED', new InvalidActionStatusException(action.status, 'COMPLETED'));
+    const queueKey = RedisQueue.getUserQueueKey(action.userId);
     await this.redis.lrem(queueKey, 1, action.id);
   }
 
   async peek(userId: string) {
-    const queueKey = this.getUserQueueKey(userId);
+    const queueKey = RedisQueue.getUserQueueKey(userId);
     const actionsIds = await this.redis.lrange(queueKey, 0, -1);
     return this.actionRepository.findMany(actionsIds);
   }
