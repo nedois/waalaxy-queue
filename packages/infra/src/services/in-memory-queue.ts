@@ -15,7 +15,7 @@ export class InMemoryQueue extends Queue {
   }
 
   remove(action: Action) {
-    assert(action.status === 'COMPLETED', `[ Internal error ] Action status must be COMPLETED`);
+    assert(action.status === 'COMPLETED', `[ Internal Error ] Action status must be COMPLETED`);
     const queue = queues.get(action.userId) ?? [];
     const index = queue.indexOf(action.id);
     if (index !== -1) {

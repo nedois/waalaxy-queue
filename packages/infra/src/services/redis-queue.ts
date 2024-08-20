@@ -17,7 +17,7 @@ export class RedisQueue extends Queue {
   }
 
   async remove(action: Action) {
-    assert(action.status === 'COMPLETED', `[ Internal error ] Action status must be COMPLETED`);
+    assert(action.status === 'COMPLETED', `[ Internal Error ] Action status must be COMPLETED`);
     const queueKey = this.getUserQueueKey(action.userId);
     await this.redis.lrem(queueKey, 1, action.id);
   }

@@ -5,7 +5,7 @@ import { EntityNotFoundException } from '../exceptions';
 import { CreateUserActionUseCase } from './create-user-action.usecase';
 
 describe('CreateUserActionUseCase', () => {
-  const userId = 'user-id';
+  const userId = '3b477874-5111-4507-aab7-268e2e6638a7';
   let usecase: CreateUserActionUseCase;
 
   beforeEach(() => {

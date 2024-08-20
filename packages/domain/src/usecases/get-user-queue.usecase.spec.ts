@@ -3,7 +3,7 @@ import { Action } from '../entities';
 import { GetUserQueueUseCase } from './get-user-queue.usecase';
 
 describe('GetUserQueueUseCase', () => {
-  const userId = 'user-id';
+  const userId = '3b477874-5111-4507-aab7-268e2e6638a7';
   let usecase: GetUserQueueUseCase;
 
   beforeEach(() => {

@@ -4,7 +4,7 @@ import { Credit } from '../entities';
 import { CreditDomainService } from './credit.domain-service';
 
 describe('CreditDomainService', () => {
-  const userId = 'user-id';
+  const userId = '3b477874-5111-4507-aab7-268e2e6638a7';
   let service: CreditDomainService;
 
   beforeEach(() => {

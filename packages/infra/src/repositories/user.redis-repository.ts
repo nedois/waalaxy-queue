@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { BaseRedisRepository } from './base.redis-repository';
 
 export class UserRedisRepository extends BaseRedisRepository implements UserRepository {
-  private getUserKey(id: string) {
+  static getUserKey(id: string) {
     return `user:id:${id}`;
   }
 
-  private getUsernameKey(username: string) {
+  static getUsernameKey(username: string) {
     return `user:username:${username}`;
   }
 
@@ -25,7 +25,7 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
   }
 
   async findOne(id: string) {
-    const data = await this.redis.get(this.getUserKey(id));
+    const data = await this.redis.get(UserRedisRepository.getUserKey(id));
 
     if (!data) {
       return null;
@@ -35,7 +35,7 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
   }
 
   async findOneByUsername(username: string) {
-    const userId = await this.redis.get(this.getUsernameKey(username));
+    const userId = await this.redis.get(UserRedisRepository.getUsernameKey(username));
 
     if (!userId) {
       return null;
@@ -45,7 +45,7 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
   }
 
   async find() {
-    const keys = await this.redis.keys(this.getUserKey('*'));
+    const keys = await this.redis.keys(UserRedisRepository.getUserKey('*'));
 
     if (!keys.length) {
       return [];
@@ -59,8 +59,8 @@ export class UserRedisRepository extends BaseRedisRepository implements UserRepo
 
   async save(user: User) {
     await Promise.all([
-      this.redis.set(this.getUserKey(user.id), JSON.stringify(user)),
-      this.redis.set(this.getUsernameKey(user.username), user.id),
+      this.redis.set(UserRedisRepository.getUserKey(user.id), JSON.stringify(user)),
+      this.redis.set(UserRedisRepository.getUsernameKey(user.username), user.id),
     ]);
 
     return user;

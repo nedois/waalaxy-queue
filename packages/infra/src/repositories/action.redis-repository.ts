@@ -1,13 +1,18 @@
-import { Action, type ActionRepository } from '@repo/domain';
+import { Action, EntityNotFoundException, type ActionRepository } from '@repo/domain';
+import assert from 'node:assert';
 import { z } from 'zod';
 import { BaseRedisRepository } from './base.redis-repository';
 
 export class ActionRedisRepository extends BaseRedisRepository implements ActionRepository {
-  private getUserActionsKey(userId: string) {
+  static getUserActionsKey(userId: string) {
     return `user:actions:${userId}`;
   }
 
-  private getActionsKey() {
+  static getActionKey(action: Action) {
+    return action.id;
+  }
+
+  static getActionsKey() {
     return 'actions';
   }
 
@@ -28,7 +33,7 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
   }
 
   async findByUserId(userId: string) {
-    const actionsIds = await this.redis.smembers(this.getUserActionsKey(userId));
+    const actionsIds = await this.redis.smembers(ActionRedisRepository.getUserActionsKey(userId));
     const actions = await this.findMany(actionsIds);
     return actions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
@@ -38,8 +43,12 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
       return [];
     }
 
-    const actions = await this.redis.hmget(this.getActionsKey(), ...actionIds);
-    return actions.map(ActionRedisRepository.parse);
+    const actions = await this.redis.hmget(ActionRedisRepository.getActionsKey(), ...actionIds);
+
+    return actions.map((data, idx) => {
+      assert(data, new EntityNotFoundException(Action, actionIds[idx]));
+      return ActionRedisRepository.parse(data);
+    });
   }
 
   async save(action: Action) {
@@ -48,8 +57,11 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
     const data = JSON.stringify(action);
 
     await Promise.all([
-      this.redis.hset(this.getActionsKey(), action.id, data),
-      this.redis.sadd(this.getUserActionsKey(action.userId), action.id),
+      this.redis.hset(ActionRedisRepository.getActionsKey(), ActionRedisRepository.getActionKey(action), data),
+      this.redis.sadd(
+        ActionRedisRepository.getUserActionsKey(action.userId),
+        ActionRedisRepository.getActionKey(action)
+      ),
     ]);
 
     return action;

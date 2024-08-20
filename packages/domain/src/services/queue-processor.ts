@@ -1,7 +1,8 @@
 import assert from 'node:assert';
 import { actionHandlers } from '../action-handlers';
 import { CreditDomainService } from '../domain-services';
-import { Action, Notification, User } from '../entities';
+import { Action, Credit, Notification, User } from '../entities';
+import { EntityNotFoundException } from '../exceptions';
 import { ActionRepository, CreditRepository, UserRepository } from '../repositories';
 import { Notifier } from './notifier';
 import { Queue } from './queue';
@@ -94,7 +95,7 @@ export abstract class QueueProcessor {
 
     const nextAction = actions.find((action) => {
       const actionCredit = creditsMap.get(action.name);
-      assert(actionCredit, '[ Internal Error ] Credit not found');
+      assert(actionCredit, new EntityNotFoundException(Credit, action.name));
       return actionCredit.amount > 0;
     });
 
@@ -115,7 +116,7 @@ export abstract class QueueProcessor {
       this.userRepository.findOne(action.userId),
     ]);
 
-    assert(user, '[ Internal Error ] User not found');
+    assert(user, new EntityNotFoundException(User, action.userId));
 
     credit.amount -= 1;
     action.status = 'COMPLETED';
@@ -186,7 +187,7 @@ export abstract class QueueProcessor {
     }
 
     let user = await this.userRepository.findOne(userId);
-    assert(user, '[ Internal Error ] User not found');
+    assert(user, new EntityNotFoundException(User, userId));
 
     user = await this.revalidateUserLock(user);
 

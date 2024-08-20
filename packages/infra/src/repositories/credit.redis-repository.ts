@@ -1,10 +1,10 @@
-import { Action, ActionName, Credit, type CreditRepository } from '@repo/domain';
+import { Action, ActionName, Credit, EntityNotFoundException, type CreditRepository } from '@repo/domain';
 import assert from 'node:assert';
 import { z } from 'zod';
 import { BaseRedisRepository } from './base.redis-repository';
 
 export class CreditRedisRepository extends BaseRedisRepository implements CreditRepository {
-  private getUserCreditsKey(userId: string) {
+  static getUserCreditsKey(userId: string) {
     return `user:credits:${userId}`;
   }
 
@@ -22,19 +22,19 @@ export class CreditRedisRepository extends BaseRedisRepository implements Credit
   }
 
   async findByUserId(userId: string) {
-    const data = await this.redis.hgetall(this.getUserCreditsKey(userId));
+    const data = await this.redis.hgetall(CreditRedisRepository.getUserCreditsKey(userId));
     return Object.values(data).map(CreditRedisRepository.parse);
   }
 
   async findOneByUserIdAndActionName(userId: string, actionName: ActionName) {
-    const data = await this.redis.hget(this.getUserCreditsKey(userId), actionName);
-    assert(data, '[ Internal Error ] Credit not found');
+    const data = await this.redis.hget(CreditRedisRepository.getUserCreditsKey(userId), actionName);
+    assert(data, new EntityNotFoundException(Credit, actionName));
 
     return CreditRedisRepository.parse(data);
   }
 
   async save(credit: Credit) {
-    const creditKey = this.getUserCreditsKey(credit.userId);
+    const creditKey = CreditRedisRepository.getUserCreditsKey(credit.userId);
     const data = JSON.stringify(credit);
 
     await this.redis.hset(creditKey, credit.actionName, data);
@@ -50,7 +50,7 @@ export class CreditRedisRepository extends BaseRedisRepository implements Credit
       {} as Record<ActionName, string>
     );
 
-    await this.redis.hset(this.getUserCreditsKey(userId), creditsRecord);
+    await this.redis.hset(CreditRedisRepository.getUserCreditsKey(userId), creditsRecord);
 
     return credits;
   }
