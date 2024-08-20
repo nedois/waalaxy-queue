@@ -65,6 +65,7 @@
     "jest-environment-jsdom": "^29.4.1",
     "jest-environment-node": "^29.4.1",
     "jsdom": "~22.1.0",
+    "node-mocks-http": "^1.15.1",
     "nx": "18.2.1",
     "prettier": "^2.6.2",
     "ts-jest": "^29.1.0",
