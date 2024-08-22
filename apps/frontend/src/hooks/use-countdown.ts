@@ -1,17 +1,19 @@
 import { useCallback, useRef } from 'react';
 
-interface UseCountdownAOptions {
+export interface UseCountdownOptions {
   /** The countdown start time in seconds */
-  startAt: number;
+  startsAt: number;
 }
+
+export type UseCountdownReturn = ReturnType<typeof useCountdown>;
 
 /**
  * Reference based countdown hook that avoid rerenders
  */
-export function useCountdown({ startAt }: UseCountdownAOptions) {
+export function useCountdown({ startsAt }: UseCountdownOptions) {
   const intervalRef = useRef<number | null>(null);
   const textContentRef = useRef<HTMLSpanElement | null>(null);
-  const remainingTimeRef = useRef(startAt);
+  const remainingTimeRef = useRef(startsAt);
 
   const startCountdown = useCallback(() => {
     // Prevent multiple intervals
@@ -42,13 +44,13 @@ export function useCountdown({ startAt }: UseCountdownAOptions) {
   const resetCountdown = useCallback(
     (newStartTime?: number) => {
       stopCountdown();
-      remainingTimeRef.current = newStartTime ?? startAt;
+      remainingTimeRef.current = newStartTime ?? startsAt;
 
       if (textContentRef.current) {
         textContentRef.current.textContent = `${remainingTimeRef.current} s`;
       }
     },
-    [startAt, stopCountdown]
+    [startsAt, stopCountdown]
   );
 
   const assignTextRef = useCallback((ref: typeof textContentRef) => {
@@ -60,5 +62,5 @@ export function useCountdown({ startAt }: UseCountdownAOptions) {
     resetCountdown,
     stopCountdown,
     assignTextRef,
-  };
+  } as const;
 }

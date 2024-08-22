@@ -93,7 +93,9 @@ export class QueueProcessor {
     }
 
     const elapsedTime = new Date().getTime() - this.initializedAt.getTime();
-    return this.CREDITS_RENEWAL_INTERVAL - elapsedTime;
+    const timeSinceLastRenewal = elapsedTime % this.CREDITS_RENEWAL_INTERVAL;
+
+    return this.CREDITS_RENEWAL_INTERVAL - timeSinceLastRenewal;
   }
 
   getSettings() {
@@ -188,6 +190,17 @@ export class QueueProcessor {
         type: 'ACTION_RUNNING',
         message: `Action ${action.name} is running`,
         payload: action,
+      })
+    );
+  }
+
+  private async notifyInCreditRenewal(userId: string) {
+    await this.notifier.realtime(
+      userId,
+      new Notification({
+        id: Notification.generateId(),
+        type: 'CREDIT_RENEWAL',
+        message: 'Credits are being renewed',
       })
     );
   }
@@ -326,7 +339,11 @@ export class QueueProcessor {
     // of chunking the users for simplicity
     this.renewalCreditsInterval = setInterval(async () => {
       const users = await this.userRepository.find();
-      await Promise.all(users.map((user) => this.creditDomainService.recalculateUserCredits(user.id)));
+      const userRenewalsPromises = users.map((user) =>
+        Promise.all([this.creditDomainService.recalculateUserCredits(user.id), this.notifyInCreditRenewal(user.id)])
+      );
+
+      await Promise.all(userRenewalsPromises);
       await Promise.all(users.map((user) => this.scheduleNextAction(user.id)));
     }, this.CREDITS_RENEWAL_INTERVAL);
   }

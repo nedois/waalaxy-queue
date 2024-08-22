@@ -1,3 +1,5 @@
+import type { UseCountdownReturn } from '../../hooks';
+
 export interface QueueActionProps {
   active?: boolean;
   /**
@@ -6,3 +8,9 @@ export interface QueueActionProps {
    */
   idle?: boolean;
 }
+
+export interface QueueNextActionCounterProps {
+  startsAt: number;
+}
+
+export type QueueNextActionCounterRef = Pick<UseCountdownReturn, 'resetCountdown' | 'startCountdown'>;

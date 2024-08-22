@@ -3,6 +3,7 @@ import { useQueryClient } from 'react-query';
 import { Notification } from '../../api/entities';
 import { env } from '../../env';
 import { useUserAccount } from './use-user-account';
+
 interface UseSubscribeToNotificationsOptions {
   onNotification?: (notification: Notification) => void;
 }
@@ -30,5 +31,5 @@ export function useSubscribeToNotifications(options?: UseSubscribeToNotification
     return () => {
       eventSource.close();
     };
-  }, [user?.id]);
+  }, [user?.id, options?.onNotification]);
 }

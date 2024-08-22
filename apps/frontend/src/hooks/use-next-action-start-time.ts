@@ -1,5 +1,6 @@
 import { useQueueSettings, useUserAccount } from './api';
 
+/** Returns the time in seconds until the next action execution */
 export function useNextActionStartTime() {
   const { data: settings } = useQueueSettings();
   const { data: user } = useUserAccount();

@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-export const QueueTimerRoot = styled.div`
+export const CountdownCounterRoot = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
