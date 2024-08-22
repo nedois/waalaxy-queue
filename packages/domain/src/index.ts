@@ -1,4 +1,3 @@
-export * from './__mocks__';
 export * from './action-handlers';
 export * from './domain-services';
 export * from './entities';
