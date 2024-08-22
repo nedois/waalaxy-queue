@@ -1,5 +1,5 @@
 import { Action } from '../entities';
-import { QueueProcessor } from '../services';
+import { Queue } from '../services';
 import type { UseCase } from './usecase';
 
 type Input = {
@@ -9,9 +9,9 @@ type Input = {
 type Output = Action[];
 
 export class GetUserQueueUseCase implements UseCase<Input, Output> {
-  constructor(private readonly queueProcessor: QueueProcessor) {}
+  constructor(private readonly queue: Queue) {}
 
   async execute(input: Input): Promise<Output> {
-    return this.queueProcessor.getUserQueue(input.userId);
+    return this.queue.peek(input.userId);
   }
 }

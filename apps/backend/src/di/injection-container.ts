@@ -5,6 +5,7 @@ import {
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
   GetUserQueueUseCase,
+  QueueProcessor,
 } from '@repo/domain';
 import {
   ActionInMemoryRepository,
@@ -12,9 +13,7 @@ import {
   CreditInMemoryRepository,
   CreditRedisRepository,
   InMemoryQueue,
-  InMemoryQueueProcessor,
   RedisQueue,
-  RedisQueueProcessor,
   SSENotifier,
   UserInMemoryRepository,
   UserRedisRepository,
@@ -36,10 +35,9 @@ const queueProcessorOptions = {
 
 const notifier = new SSENotifier();
 const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository);
-const QueueProcessorClass = redis ? RedisQueueProcessor : InMemoryQueueProcessor;
 
 const creditDomainService = new CreditDomainService(creditRepository);
-const queueProcessor = new QueueProcessorClass(
+const queueProcessor = new QueueProcessor(
   queueProcessorOptions,
   queue,
   actionRepository,
@@ -54,7 +52,7 @@ const getUserInfoUseCase = new GetUserInfoUseCase(userRepository);
 const getUserActionsUseCase = new GetUserActionsUseCase(actionRepository);
 const getUserCreditsUseCase = new GetUserCreditsUseCase(creditRepository);
 const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository, queueProcessor);
-const getUserQueueUseCase = new GetUserQueueUseCase(queueProcessor);
+const getUserQueueUseCase = new GetUserQueueUseCase(queue);
 
 async function dispose() {
   await queueProcessor.stop();

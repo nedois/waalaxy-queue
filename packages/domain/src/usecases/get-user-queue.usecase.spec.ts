@@ -1,4 +1,4 @@
-import { queueProcessorMock } from '../__mocks__/services';
+import { queueMock } from '../__mocks__/services';
 import { Action } from '../entities';
 import { GetUserQueueUseCase } from './get-user-queue.usecase';
 
@@ -7,14 +7,14 @@ describe('GetUserQueueUseCase', () => {
   let usecase: GetUserQueueUseCase;
 
   beforeEach(() => {
-    usecase = new GetUserQueueUseCase(queueProcessorMock);
+    usecase = new GetUserQueueUseCase(queueMock);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should call getUserQueue with the correct userId', async () => {
+  it('should call peek method with the correct userId', async () => {
     const actions = [
       new Action({
         id: 'action-1',
@@ -35,19 +35,19 @@ describe('GetUserQueueUseCase', () => {
         runnedAt: null,
       }),
     ];
-    queueProcessorMock.getUserQueue.mockResolvedValue(actions);
+    queueMock.peek.mockResolvedValue(actions);
 
     const result = await usecase.execute({ userId });
 
-    expect(queueProcessorMock.getUserQueue).toHaveBeenCalledWith(userId);
+    expect(queueMock.peek).toHaveBeenCalledWith(userId);
     expect(result).toEqual(actions);
   });
 
   it('should return an empty array if no actions are found', async () => {
-    queueProcessorMock.getUserQueue.mockResolvedValue([]);
+    queueMock.peek.mockResolvedValue([]);
     const result = await usecase.execute({ userId });
 
-    expect(queueProcessorMock.getUserQueue).toHaveBeenCalledWith(userId);
+    expect(queueMock.peek).toHaveBeenCalledWith(userId);
     expect(result).toEqual([]);
   });
 });

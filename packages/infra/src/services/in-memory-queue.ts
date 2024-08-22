@@ -1,4 +1,4 @@
-import { Action, InvalidActionStatusException, Queue, type ActionRepository } from '@repo/domain';
+import { Action, InvalidActionStatusException, Queue, UserRepository, type ActionRepository } from '@repo/domain';
 import assert from 'node:assert';
 
 const database = new Map<string, string[]>();
@@ -6,8 +6,9 @@ const database = new Map<string, string[]>();
 export class InMemoryQueue extends Queue {
   public readonly database = database;
 
-  constructor(private readonly actionRepository: ActionRepository) {
+  constructor(private readonly actionRepository: ActionRepository, private readonly userRepository: UserRepository) {
     super();
+    this.prepareUserQueues();
   }
 
   enqueue(action: Action) {
@@ -29,5 +30,15 @@ export class InMemoryQueue extends Queue {
   peek(userId: string) {
     const actionIds = this.database.get(userId) ?? [];
     return this.actionRepository.findMany(actionIds);
+  }
+
+  private async prepareUserQueues() {
+    const users = await this.userRepository.find();
+
+    users.forEach(async (user) => {
+      const actions = await this.actionRepository.findByUserId(user.id);
+      const orderedActions = actions.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      orderedActions.forEach((action) => this.enqueue(action));
+    });
   }
 }

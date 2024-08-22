@@ -12,6 +12,6 @@ export abstract class Queue {
    **/
   abstract remove(action: Action): Promise<void> | void;
 
-  /** Get queue actions */
+  /** Get queue actions, actions should be ordered by createdAt */
   abstract peek(userId: string): Promise<Action[]> | Action[];
 }

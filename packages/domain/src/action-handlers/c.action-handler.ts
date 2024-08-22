@@ -1,12 +1,13 @@
 import { BaseActionHandler } from './base.action-handler';
 
 export class CActionHandler extends BaseActionHandler {
+  static readonly fakeExecutionTime = 4000; // 4 seconds
+
   static actionName = 'C' as const;
 
   public readonly maximumCredit = 5;
 
   async execute() {
-    const FAKE_EXECTION_TIME = 4000; // 3 seconds
-    await this.sleep(FAKE_EXECTION_TIME);
+    await this.sleep(CActionHandler.fakeExecutionTime);
   }
 }

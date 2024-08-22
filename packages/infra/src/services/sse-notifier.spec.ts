@@ -27,7 +27,7 @@ describe('SSENotifier', () => {
 
   describe('subscribe', () => {
     it('should set the correct headers and handle request close event', () => {
-      const onSpy = jest.spyOn(request, 'on');
+      const requestSpy = jest.spyOn(request, 'on');
 
       sseNotifier.subscribe(request, response);
 
@@ -38,7 +38,7 @@ describe('SSENotifier', () => {
       expect(response.getHeader('Connection')).toBe('keep-alive');
       expect(response.getHeader('X-Accel-Buffering')).toBe('no');
 
-      expect(onSpy).toHaveBeenCalledWith('close', expect.any(Function));
+      expect(requestSpy).toHaveBeenCalledWith('close', expect.any(Function));
     });
   });
 

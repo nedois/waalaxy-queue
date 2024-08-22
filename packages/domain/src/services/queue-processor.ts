@@ -2,7 +2,11 @@ import assert from 'node:assert';
 import { actionHandlers } from '../action-handlers';
 import { CreditDomainService } from '../domain-services';
 import { Action, Credit, Notification, User } from '../entities';
-import { EntityNotFoundException } from '../exceptions';
+import {
+  ActionHandlerNotFoundException,
+  EntityNotFoundException,
+  QueueProcessorNotInitializedException,
+} from '../exceptions';
 import { ActionRepository, CreditRepository, UserRepository } from '../repositories';
 import { Notifier } from './notifier';
 import { Queue } from './queue';
@@ -15,7 +19,7 @@ export interface QueueProcessorOptions {
   actionExecutionInterval: number;
 }
 
-export abstract class QueueProcessor {
+export class QueueProcessor {
   private readonly RENEWAL_CREDITS_INTERVAL: number;
 
   private readonly ACTION_EXECUTION_INTERVAL: number;
@@ -27,67 +31,64 @@ export abstract class QueueProcessor {
 
   private queueTimeouts = new Map<string, NodeJS.Timeout>();
 
-  private isShuttingDown = false;
+  initializedAt: Date | null = null;
 
-  private initiliazed = false;
+  isShuttingDown = false;
 
   constructor(
     options: QueueProcessorOptions,
-    protected readonly queue: Queue,
-    protected readonly actionRepository: ActionRepository,
-    protected readonly creditRepository: CreditRepository,
-    protected readonly userRepository: UserRepository,
-    protected readonly notifier: Notifier,
-    protected readonly creditDomainService: CreditDomainService
+    private readonly queue: Queue,
+    private readonly actionRepository: ActionRepository,
+    private readonly creditRepository: CreditRepository,
+    private readonly userRepository: UserRepository,
+    private readonly notifier: Notifier,
+    private readonly creditDomainService: CreditDomainService
   ) {
     this.RENEWAL_CREDITS_INTERVAL = options.renewalCreditsInterval;
     this.ACTION_EXECUTION_INTERVAL = options.actionExecutionInterval;
     this.QUEUE_LOCK_THRESHOLD = this.ACTION_EXECUTION_INTERVAL;
   }
 
-  /** Initialize the queue processor and all user queues */
+  get isInitialized() {
+    return this.initializedAt !== null;
+  }
+
+  /**
+   * Initializes the QueueProcessor by starting all user queues and
+   * setting up the renewal credits interval.
+   */
   async initialize() {
-    this.initiliazed = true;
+    if (this.isInitialized || this.isShuttingDown) {
+      return;
+    }
 
-    await this.prepareUserQueues();
+    this.initializedAt = new Date();
 
-    const users = await this.userRepository.find();
-    await Promise.all(users.map((user) => this.scheduleNextAction(user.id)));
-
+    await this.startAllUsersQueue();
     this.initializeRenewalCreditsInterval();
   }
 
-  /** Enqueue user actions from the persistance */
-  abstract prepareUserQueues(): Promise<void> | void;
-
   /**
    * Stop the queue processor gracefully.
-   * This method should be called when the application is shutting down.
-   * It should wait for all the pending actions to be completed before stopping.
+   * This method should be called during the application shutdown to ensure
+   * all the RUNNING actions to be completed before stopping.
    */
   async stop() {
-    if (this.renewalCreditsInterval) {
-      clearInterval(this.renewalCreditsInterval);
-    }
-
-    this.clearTimeouts();
+    this.isShuttingDown = true;
+    this.stopRenewalCreditsInterval();
+    this.handleShutdown();
   }
 
-  async getUserQueue(userId: string) {
-    return this.queue.peek(userId);
-  }
-
-  /**
-   * Enqueue an action to the user queue.
-   * The action will be executed in the next available slot.
-   */
+  /** Adds a new action to the user's queue and schedules it for execution. */
   async enqueueAction(action: Action) {
+    assert(this.isInitialized, new QueueProcessorNotInitializedException());
+
     await this.queue.enqueue(action);
     await this.scheduleNextAction(action.userId);
   }
 
-  /** Get the next executable action based on the user's credit */
-  protected async getNextExecutableAction(userId: string) {
+  /** Determines the next action that can be executed based on the user's credits. */
+  private async getNextExecutableAction(userId: string) {
     const credits = await this.creditRepository.findByUserId(userId);
     const creditsMap = new Map(credits.map((credit) => [credit.actionName, credit]));
 
@@ -96,38 +97,13 @@ export abstract class QueueProcessor {
     const nextAction = actions.find((action) => {
       const actionCredit = creditsMap.get(action.name);
       assert(actionCredit, new EntityNotFoundException(Credit, action.name));
-      return actionCredit.amount > 0;
+      return actionCredit.amount > 0 && action.status === 'PENDING';
     });
 
     return nextAction ?? null;
   }
 
-  /**
-   * On action completed:
-   * - Update the action status to 'COMPLETED'
-   * - Decrease the user's credit by 1
-   * - Unlock the user queue
-   * - Notify the user
-   * - Dequeue the current action
-   */
-  protected async onActionCompleted(action: Action) {
-    const [credit, user] = await Promise.all([
-      this.creditRepository.findOneByUserIdAndActionName(action.userId, action.name),
-      this.userRepository.findOne(action.userId),
-    ]);
-
-    assert(user, new EntityNotFoundException(User, action.userId));
-
-    credit.amount -= 1;
-    action.status = 'COMPLETED';
-    user.lockedQueueAt = null;
-
-    await Promise.all([
-      this.actionRepository.save(action),
-      this.creditRepository.save(credit),
-      this.userRepository.save(user),
-    ]);
-
+  private async notifyActionCompletion(action: Action) {
     await this.notifier.realtime(
       action.userId,
       new Notification({
@@ -137,64 +113,150 @@ export abstract class QueueProcessor {
         payload: action,
       })
     );
+  }
 
+  private async decrementUserCredit(action: Action) {
+    const credit = await this.creditRepository.findOneByUserIdAndActionName(action.userId, action.name);
+    assert(credit, new EntityNotFoundException(Credit, action.name));
+
+    credit.amount -= 1;
+    return this.creditRepository.save(credit);
+  }
+
+  private async markActionAsCompleted(action: Action) {
+    action.status = 'COMPLETED';
+    return this.actionRepository.save(action);
+  }
+
+  /**
+   * Handles the completion of an action by:
+   * - Updating the action status to 'COMPLETED'
+   * - Decreasing the user's credit by 1
+   * - Unlocking the user queue
+   * - Notifying the user
+   * - Removing the action from the queue
+   * - Scheduling the next action for the user
+   */
+  private async onActionCompleted(action: Action) {
+    const user = await this.userRepository.findOne(action.userId);
+    assert(user, new EntityNotFoundException(User, action.userId));
+
+    await this.decrementUserCredit(action);
+    await this.unlockUserQueue(user);
+    await this.markActionAsCompleted(action);
+    await this.notifyActionCompletion(action);
     await this.queue.remove(action);
-
-    // Schedule the next action
     await this.scheduleNextAction(action.userId);
   }
 
   /**
-   * Execute the action:
-   * - Notify the user that the action is running
-   * - Update the action status to 'RUNNING'
-   * - Execute the action handler
+   * Prepares an action for execution by:
+   * - Updating its status to 'RUNNING'
+   * - Recording the run start time
+   * - Updating the user's last action executed time
    */
-  protected async executeAction(action: Action, user: User) {
+  private async prepareActionForExecution(action: Action, user: User) {
     action.status = 'RUNNING';
     action.runnedAt = new Date();
     user.lastActionExecutedAt = new Date();
 
-    await Promise.all([
-      this.userRepository.save(user),
-      this.actionRepository.save(action),
-      this.notifier.realtime(
-        action.userId,
-        new Notification({
-          id: Notification.generateId(),
-          type: 'ACTION_RUNNING',
-          message: `Action ${action.name} is running`,
-          payload: action,
-        })
-      ),
-    ]);
+    await Promise.all([this.userRepository.save(user), this.actionRepository.save(action)]);
+  }
 
+  private async notifyActionRunning(action: Action) {
+    await this.notifier.realtime(
+      action.userId,
+      new Notification({
+        id: Notification.generateId(),
+        type: 'ACTION_RUNNING',
+        message: `Action ${action.name} is running`,
+        payload: action,
+      })
+    );
+  }
+
+  private async runActionHandler(action: Action) {
     const ActionHandler = actionHandlers.find((handler) => handler.actionName === action.name);
-    assert(ActionHandler, `[ Internal Error ] Action handler not found for ${action.name}`);
+    assert(ActionHandler, new ActionHandlerNotFoundException(action.name));
 
     await new ActionHandler().execute();
+  }
 
+  /**
+   * Executes an action by:
+   * - Preparing the action and user for execution
+   * - Notifying the user that the action is running
+   * - Running the action handler
+   * - Handling the completion of the action
+   */
+  private async executeAction(action: Action, user: User) {
+    await this.prepareActionForExecution(action, user);
+    await this.notifyActionRunning(action);
+    await this.runActionHandler(action);
     await this.onActionCompleted(action);
   }
 
-  /** Schedule the next action to run in the next ACTION_EXECUTION_INTERVAL */
-  protected async scheduleNextAction(userId: string) {
-    assert(this.initiliazed, '[ Internal Error ] Queue processor not initialized');
+  /** Determines if there are running tasks in any queue */
+  private hasRunningTasks() {
+    return this.queueTimeouts.size > 0;
+  }
 
-    if (this.isShuttingDown) {
-      // Last task finished, we can stop this user queue
-      return this.clearTimeout(userId);
+  /**
+   * Handles the shutdown process by:
+   * - Marking the processor as stopped if there are no running tasks
+   * - Clearing any scheduled timeouts for the user if provided
+   */
+  private handleShutdown(userId?: string) {
+    if (userId) {
+      // Prevent scheduling a new task for this user and cleanup current
+      // user interval
+      this.clearTimeout(userId);
     }
 
-    let user = await this.userRepository.findOne(userId);
+    // Mark processor has stopped if there is not running task
+    if (!this.hasRunningTasks()) {
+      this.initializedAt = null;
+      this.isShuttingDown = false;
+    }
+  }
+
+  private async loadAndValidateUser(userId: string) {
+    const user = await this.userRepository.findOne(userId);
     assert(user, new EntityNotFoundException(User, userId));
 
-    user = await this.revalidateUserLock(user);
+    return this.revalidateUserLock(user);
+  }
+
+  private async lockUserQueue(user: User) {
+    user.lockedQueueAt = new Date();
+    return this.userRepository.save(user);
+  }
+
+  private async unlockUserQueue(user: User) {
+    user.lockedQueueAt = null;
+    return this.userRepository.save(user);
+  }
+
+  private scheduleActionExecution(action: Action, user: User) {
+    const timeout = setTimeout(
+      async () => await this.executeAction(action, user),
+      this.calculateNextActionExecutionTime(user)
+    );
+
+    // Save the timeout to clear it later
+    this.queueTimeouts.set(user.id, timeout);
+  }
+
+  /** Schedule the next action to run in the next ACTION_EXECUTION_INTERVAL */
+  private async scheduleNextAction(userId: string) {
+    if (this.isShuttingDown) {
+      return this.handleShutdown(userId);
+    }
+
+    let user = await this.loadAndValidateUser(userId);
 
     // If the user is locked, we'll try again in the next interval
-    if (user.lockedQueueAt) {
-      return;
-    }
+    if (user.isQueueLocked()) return;
 
     const nextAction = await this.getNextExecutableAction(userId);
 
@@ -205,21 +267,11 @@ export abstract class QueueProcessor {
 
     // Lock the user to avoid processing workers to execute the same
     // action queue at the same time
-    user.lockedQueueAt = new Date();
-    await this.userRepository.save(user);
+    user = await this.lockUserQueue(user);
 
     // Get the execution time for the next action
     // and execute the action after the time has passed
-    const timeout = setTimeout(() => this.executeAction(nextAction, user), this.calculateNextActionExecutionTime(user));
-
-    // Save the timeout to clear it later
-    this.queueTimeouts.set(userId, timeout);
-  }
-
-  private clearTimeouts() {
-    for (const timeout of this.queueTimeouts.values()) {
-      clearTimeout(timeout);
-    }
+    this.scheduleActionExecution(nextAction, user);
   }
 
   /** Clear the timeout for the user, to prevent memory leaks */
@@ -245,8 +297,7 @@ export abstract class QueueProcessor {
     const elapsedTime = new Date().getTime() - user.lockedQueueAt.getTime();
 
     if (elapsedTime > this.QUEUE_LOCK_THRESHOLD) {
-      user.lockedQueueAt = null;
-      await this.userRepository.save(user);
+      await this.unlockUserQueue(user);
     }
 
     return user;
@@ -265,7 +316,7 @@ export abstract class QueueProcessor {
 
   /**
    * Calculate the next action execution time based on the user's
-   * last action executed time and the action execution interval.
+   * last action executed time and the defined  action execution interval.
    */
   private calculateNextActionExecutionTime(user: User) {
     if (!user.lastActionExecutedAt) {
@@ -275,5 +326,18 @@ export abstract class QueueProcessor {
     const elapsedTime = new Date().getTime() - user.lastActionExecutedAt.getTime();
     const nextActionIn = this.ACTION_EXECUTION_INTERVAL - elapsedTime;
     return Math.floor(Math.max(nextActionIn, 0));
+  }
+
+  /**  Starts processing actions for all users by scheduling their next actions. */
+  private async startAllUsersQueue() {
+    const users = await this.userRepository.find();
+    await Promise.all(users.map((user) => this.scheduleNextAction(user.id)));
+  }
+
+  private stopRenewalCreditsInterval() {
+    if (this.renewalCreditsInterval) {
+      clearInterval(this.renewalCreditsInterval);
+      this.renewalCreditsInterval = null;
+    }
   }
 }

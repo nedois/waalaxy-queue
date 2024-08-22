@@ -6,4 +6,8 @@ export class User extends BaseEntity<User> {
   declare lockedQueueAt: Date | null;
 
   declare lastActionExecutedAt: Date | null;
+
+  isQueueLocked() {
+    return !!this.lockedQueueAt;
+  }
 }
