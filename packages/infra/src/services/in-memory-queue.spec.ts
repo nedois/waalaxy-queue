@@ -1,14 +1,16 @@
 import { Action, InvalidActionStatusException } from '@repo/domain';
-import { ActionInMemoryRepository } from '../repositories';
+import { ActionInMemoryRepository, UserInMemoryRepository } from '../repositories';
 import { InMemoryQueue } from './in-memory-queue';
 
 describe('InMemoryQueue', () => {
   let inMemoryQueue: InMemoryQueue;
   let actionRepository: ActionInMemoryRepository;
+  let userRepository: UserInMemoryRepository;
 
   beforeEach(() => {
     actionRepository = new ActionInMemoryRepository();
-    inMemoryQueue = new InMemoryQueue(actionRepository);
+    userRepository = new UserInMemoryRepository();
+    inMemoryQueue = new InMemoryQueue(actionRepository, userRepository);
   });
 
   afterEach(() => {

@@ -34,7 +34,7 @@ const queueProcessorOptions = {
 };
 
 const notifier = new SSENotifier();
-const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository);
+const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository, userRepository);
 
 const creditDomainService = new CreditDomainService(creditRepository);
 const queueProcessor = new QueueProcessor(
