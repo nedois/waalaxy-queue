@@ -11,7 +11,11 @@ const ActionNotification = BaseNotification.extend({
   payload: Action,
 });
 
+const CreditRenewalNotification = BaseNotification.extend({
+  type: z.literal('CREDIT_RENEWAL'),
+});
+
 // We can add others notifications types in the union
-export const Notification = z.discriminatedUnion('type', [ActionNotification]);
+export const Notification = z.discriminatedUnion('type', [ActionNotification, CreditRenewalNotification]);
 
 export type Notification = z.infer<typeof Notification>;

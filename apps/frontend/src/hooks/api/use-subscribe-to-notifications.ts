@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from 'react-query';
 import { Notification } from '../../api/entities';
 import { env } from '../../env';
@@ -10,7 +10,12 @@ interface UseSubscribeToNotificationsOptions {
 
 export function useSubscribeToNotifications(options?: UseSubscribeToNotificationsOptions) {
   const queryClient = useQueryClient();
+  const onNotificationRef = useRef<UseSubscribeToNotificationsOptions['onNotification']>(options?.onNotification);
   const { data: user } = useUserAccount();
+
+  useEffect(() => {
+    onNotificationRef.current = options?.onNotification;
+  }, [options?.onNotification]);
 
   useEffect(() => {
     if (!user) {
@@ -25,11 +30,11 @@ export function useSubscribeToNotifications(options?: UseSubscribeToNotification
       queryClient.invalidateQueries(['credits']);
 
       const notification = Notification.parse(JSON.parse(event.data));
-      options?.onNotification?.(notification);
+      onNotificationRef.current?.(notification);
     };
 
     return () => {
       eventSource.close();
     };
-  }, [user?.id, options?.onNotification]);
+  }, [user?.id]);
 }
