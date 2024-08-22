@@ -1,16 +1,15 @@
-import { useUserAccount } from './api';
-
-const QUEUE_EXECUTION_INTERVAL_IN_MS = 15000;
+import { useQueueSettings, useUserAccount } from './api';
 
 export function useNextActionStartTime() {
+  const { data: settings } = useQueueSettings();
   const { data: user } = useUserAccount();
 
-  if (!user?.lastActionExecutedAt) {
-    return 15;
+  if (!user?.lastActionExecutedAt || !settings) {
+    return 0;
   }
 
   const elapsedTime = new Date().getTime() - user.lastActionExecutedAt.getTime();
-  const nextActionIn = QUEUE_EXECUTION_INTERVAL_IN_MS - elapsedTime;
+  const nextActionIn = settings.actionExecutionInterval - elapsedTime;
 
   return Math.floor(Math.max(nextActionIn, 0) / 1000);
 }
