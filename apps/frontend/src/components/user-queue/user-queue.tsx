@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import {
   useCountdown,
   useNextActionStartTime,
+  useQueueSettings,
   useSubscribeToNotifications,
   useUserCredits,
   useUserQueue,
@@ -15,6 +16,7 @@ export function UserQueue() {
   const { assignTextRef, startCountdown, resetCountdown } = useCountdown({ startAt: nextActionStartsAt });
   const { data: queue } = useUserQueue();
   const { data: credits } = useUserCredits();
+  const { data: settings = { actionExecutionInterval: 15000 } } = useQueueSettings();
 
   const availableCredits = useMemo(
     () => new Map(credits?.map((credit) => [credit.actionName, credit.amount])),
@@ -26,7 +28,7 @@ export function UserQueue() {
   useSubscribeToNotifications({
     onNotification: (notification) => {
       if (notification.type === 'ACTION_RUNNING') {
-        resetCountdown(15);
+        resetCountdown(settings.actionExecutionInterval / 1000);
         startCountdown();
       }
     },
