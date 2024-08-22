@@ -1,6 +1,7 @@
 import {
   CreateUserActionUseCase,
   CreditDomainService,
+  GetQueueSettingsUseCase,
   GetUserActionsUseCase,
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
@@ -36,4 +37,5 @@ export interface InjectionContainer {
   createUserActionUseCase: CreateUserActionUseCase;
   getUserCreditsUseCase: GetUserCreditsUseCase;
   getUserQueueUseCase: GetUserQueueUseCase;
+  getQueueSettingsUseCase: GetQueueSettingsUseCase;
 }

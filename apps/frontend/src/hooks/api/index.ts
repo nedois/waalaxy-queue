@@ -1,6 +1,7 @@
 export * from './use-create-user-action';
 export * from './use-login';
 export * from './use-logout';
+export * from './use-queue-settings';
 export * from './use-subscribe-to-notifications';
 export * from './use-user-account';
 export * from './use-user-actions';

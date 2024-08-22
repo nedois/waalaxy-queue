@@ -1,6 +1,7 @@
 import {
   CreateUserActionUseCase,
   CreditDomainService,
+  GetQueueSettingsUseCase,
   GetUserActionsUseCase,
   GetUserCreditsUseCase,
   GetUserInfoUseCase,
@@ -28,17 +29,16 @@ const actionRepository = redis ? new ActionRedisRepository(redis) : new ActionIn
 const creditRepository = redis ? new CreditRedisRepository(redis) : new CreditInMemoryRepository();
 
 // Domain services
-const queueProcessorOptions = {
-  actionExecutionInterval: env.QUEUE_EXECUTION_INTERVAL_IN_MS,
-  renewalCreditsInterval: env.CREDITS_RENEWAL_INTERVAL_IN_MS,
-};
+const creditDomainService = new CreditDomainService(creditRepository);
 
+// Services
 const notifier = new SSENotifier();
 const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository, userRepository);
-
-const creditDomainService = new CreditDomainService(creditRepository);
 const queueProcessor = new QueueProcessor(
-  queueProcessorOptions,
+  {
+    actionExecutionInterval: env.QUEUE_EXECUTION_INTERVAL_IN_MS,
+    renewalCreditsInterval: env.CREDITS_RENEWAL_INTERVAL_IN_MS,
+  },
   queue,
   actionRepository,
   creditRepository,
@@ -53,6 +53,7 @@ const getUserActionsUseCase = new GetUserActionsUseCase(actionRepository);
 const getUserCreditsUseCase = new GetUserCreditsUseCase(creditRepository);
 const createUserActionUseCase = new CreateUserActionUseCase(actionRepository, userRepository, queueProcessor);
 const getUserQueueUseCase = new GetUserQueueUseCase(queue);
+const getQueueSettingsUseCase = new GetQueueSettingsUseCase(queueProcessor);
 
 async function dispose() {
   await queueProcessor.stop();
@@ -71,6 +72,7 @@ export const container: InjectionContainer = {
   getUserActionsUseCase,
   createUserActionUseCase,
   getUserCreditsUseCase,
+  getQueueSettingsUseCase,
   creditDomainService,
   getUserQueueUseCase,
   queueProcessor,

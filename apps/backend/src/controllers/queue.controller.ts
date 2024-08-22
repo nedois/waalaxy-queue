@@ -9,4 +9,9 @@ controller.get('/queue', authMiddleware, async (request, response) => {
   response.status(200).send(actions);
 });
 
+controller.get('/queue/settings', authMiddleware, async (request, response) => {
+  const settings = await container.getQueueSettingsUseCase.execute();
+  response.status(200).send(settings);
+});
+
 export default controller;

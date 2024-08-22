@@ -397,6 +397,21 @@ describe('QueueProcessor', () => {
       await new Promise(process.nextTick);
       expect(action.status).toBe('RUNNING');
     });
+
+    it('should return the time until the next renewal', async () => {
+      await queueProcessor.initialize();
+
+      let currentTimerTime = 0;
+      jest.advanceTimersByTime(currentTimerTime);
+      await new Promise(process.nextTick);
+      expect(queueProcessor.msUntilCreditRenewal).toBe(TEN_MINUTES_IN_MS);
+
+      // Advance 5 minutes
+      currentTimerTime += 300000;
+      jest.advanceTimersByTime(currentTimerTime);
+      await new Promise(process.nextTick);
+      expect(queueProcessor.msUntilCreditRenewal).toBe(TEN_MINUTES_IN_MS - 300000);
+    });
   });
 
   describe('stop', () => {

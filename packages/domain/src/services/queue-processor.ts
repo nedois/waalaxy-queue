@@ -20,9 +20,9 @@ export interface QueueProcessorOptions {
 }
 
 export class QueueProcessor {
-  private readonly RENEWAL_CREDITS_INTERVAL: number;
+  readonly CREDITS_RENEWAL_INTERVAL: number;
 
-  private readonly ACTION_EXECUTION_INTERVAL: number;
+  readonly ACTION_EXECUTION_INTERVAL: number;
 
   /** Maximum elapsed time to lock the user queue (in ms) */
   private readonly QUEUE_LOCK_THRESHOLD: number;
@@ -44,7 +44,7 @@ export class QueueProcessor {
     private readonly notifier: Notifier,
     private readonly creditDomainService: CreditDomainService
   ) {
-    this.RENEWAL_CREDITS_INTERVAL = options.renewalCreditsInterval;
+    this.CREDITS_RENEWAL_INTERVAL = options.renewalCreditsInterval;
     this.ACTION_EXECUTION_INTERVAL = options.actionExecutionInterval;
     this.QUEUE_LOCK_THRESHOLD = this.ACTION_EXECUTION_INTERVAL;
   }
@@ -85,6 +85,23 @@ export class QueueProcessor {
 
     await this.queue.enqueue(action);
     await this.scheduleNextAction(action.userId);
+  }
+
+  get msUntilCreditRenewal() {
+    if (!this.renewalCreditsInterval || !this.initializedAt) {
+      return null;
+    }
+
+    const elapsedTime = new Date().getTime() - this.initializedAt.getTime();
+    return this.CREDITS_RENEWAL_INTERVAL - elapsedTime;
+  }
+
+  getSettings() {
+    return {
+      timeUntilCreditRenewal: this.msUntilCreditRenewal,
+      creditRenewalInterval: this.CREDITS_RENEWAL_INTERVAL,
+      actionExecutionInterval: this.ACTION_EXECUTION_INTERVAL,
+    };
   }
 
   /** Determines the next action that can be executed based on the user's credits. */
@@ -311,7 +328,7 @@ export class QueueProcessor {
       const users = await this.userRepository.find();
       await Promise.all(users.map((user) => this.creditDomainService.recalculateUserCredits(user.id)));
       await Promise.all(users.map((user) => this.scheduleNextAction(user.id)));
-    }, this.RENEWAL_CREDITS_INTERVAL);
+    }, this.CREDITS_RENEWAL_INTERVAL);
   }
 
   /**
