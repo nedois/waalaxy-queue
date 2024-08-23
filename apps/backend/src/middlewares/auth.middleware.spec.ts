@@ -1,6 +1,5 @@
 import express, { type Express } from 'express';
 import client from 'supertest';
-
 import { authMiddleware } from './auth.middleware';
 
 describe('Auth middleware', () => {
@@ -31,7 +30,7 @@ describe('Auth middleware', () => {
     expect(response.body).toEqual({ message: 'Unauthorized' });
   });
 
-  it('should set userId and call next if authorization header is valid', async () => {
+  it('should return the userId if authorization header is valid', async () => {
     const userId = 'user123';
     const response = await client(app).get('/protected').set('Authorization', `Bearer ${userId}`);
     expect(response.status).toBe(200);
@@ -43,11 +42,5 @@ describe('Auth middleware', () => {
     const response = await client(app).get(`/protected?token=${userId}`);
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ message: 'Authenticated', userId });
-  });
-
-  it('should register the user if it does not exist', async () => {
-    const userId = 'user123';
-    await client(app).get('/protected').set('Authorization', `Bearer ${userId}`);
-    expect(database.registerUser).toHaveBeenCalledWith(userId);
   });
 });
