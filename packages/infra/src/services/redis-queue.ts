@@ -26,6 +26,7 @@ export class RedisQueue extends Queue {
   async peek(userId: string) {
     const queueKey = RedisQueue.getUserQueueKey(userId);
     const actionsIds = await this.redis.lrange(queueKey, 0, -1);
-    return this.actionRepository.findMany(actionsIds);
+    const actions = await this.actionRepository.findMany(actionsIds);
+    return actions.filter((action) => action.status !== 'COMPLETED');
   }
 }

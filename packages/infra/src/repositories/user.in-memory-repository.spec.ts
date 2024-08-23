@@ -23,8 +23,8 @@ describe('UserInMemoryRepository', () => {
       });
 
       const result = repository.save(user);
-      expect(result).toBe(user);
-      expect(repository.database.get(user.id)).toBe(user);
+      expect(result).toStrictEqual(user);
+      expect(repository.database.get(user.id)).toStrictEqual(user);
     });
   });
 
@@ -39,7 +39,7 @@ describe('UserInMemoryRepository', () => {
       repository.save(user);
 
       const foundUser = repository.findOne(userId);
-      expect(foundUser).toBe(user);
+      expect(foundUser).toStrictEqual(user);
     });
 
     it('should return null if no user is found', () => {
@@ -59,7 +59,7 @@ describe('UserInMemoryRepository', () => {
       repository.save(user);
 
       const foundUser = repository.findOneByUsername('testuser');
-      expect(foundUser).toBe(user);
+      expect(foundUser).toStrictEqual(user);
     });
 
     it('should return null if no user is found by username', () => {

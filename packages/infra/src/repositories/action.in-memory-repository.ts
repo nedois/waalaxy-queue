@@ -7,7 +7,9 @@ export class ActionInMemoryRepository implements ActionRepository {
   public readonly database = database;
 
   findByUserId(userId: string): Action[] | Promise<Action[]> {
-    return Array.from(this.database.values()).filter((action) => action.userId === userId);
+    return Array.from(this.database.values())
+      .filter((action) => action.userId === userId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
   findMany(actionIds: string[]) {
@@ -17,10 +19,11 @@ export class ActionInMemoryRepository implements ActionRepository {
       return action;
     });
 
-    return actions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return actions.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
   save(action: Action) {
+    action.updatedAt = new Date();
     this.database.set(action.id, action);
     return action;
   }

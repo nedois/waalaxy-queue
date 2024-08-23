@@ -35,7 +35,7 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
   async findByUserId(userId: string) {
     const actionsIds = await this.redis.smembers(ActionRedisRepository.getUserActionsKey(userId));
     const actions = await this.findMany(actionsIds);
-    return actions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return actions.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
   async findMany(actionIds: string[]) {
@@ -45,10 +45,12 @@ export class ActionRedisRepository extends BaseRedisRepository implements Action
 
     const actions = await this.redis.hmget(ActionRedisRepository.getActionsKey(), ...actionIds);
 
-    return actions.map((data, idx) => {
-      assert(data, new EntityNotFoundException(Action, actionIds[idx]));
-      return ActionRedisRepository.parse(data);
-    });
+    return actions
+      .map((data, idx) => {
+        assert(data, new EntityNotFoundException(Action, actionIds[idx]));
+        return ActionRedisRepository.parse(data);
+      })
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
   async save(action: Action) {

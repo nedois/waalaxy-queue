@@ -33,7 +33,7 @@ const creditDomainService = new CreditDomainService(creditRepository);
 
 // Services
 const notifier = new SSENotifier();
-const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository, userRepository);
+const queue = redis ? new RedisQueue(redis, actionRepository) : new InMemoryQueue(actionRepository);
 const queueProcessor = new QueueProcessor(
   {
     actionExecutionInterval: env.QUEUE_EXECUTION_INTERVAL_IN_MS,

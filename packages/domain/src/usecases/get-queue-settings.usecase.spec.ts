@@ -11,8 +11,8 @@ import { QueueProcessor } from '../services';
 import { GetQueueSettingsUseCase } from './get-queue-settings.usecase';
 
 describe('GetQueueSettingsUseCase', () => {
-  const CREDIT_RENEWAL_INTERVAL = 2000;
-  const ACTION_EXECUTION_INTERVAL = 1000;
+  const CREDIT_RENEWAL_INTERVAL = 20000;
+  const ACTION_EXECUTION_INTERVAL = 15000;
 
   let usecase: GetQueueSettingsUseCase;
   let queueProcessorMock: QueueProcessor;
@@ -51,11 +51,11 @@ describe('GetQueueSettingsUseCase', () => {
       actionExecutionInterval: ACTION_EXECUTION_INTERVAL,
     });
 
-    // Advance 2 minutes
-    jest.advanceTimersByTime(120000);
+    // Advance 10 seconds
+    jest.advanceTimersByTime(10000);
     await new Promise(process.nextTick);
     expect(usecase.execute()).resolves.toEqual({
-      timeUntilCreditRenewal: CREDIT_RENEWAL_INTERVAL - 120000,
+      timeUntilCreditRenewal: CREDIT_RENEWAL_INTERVAL - 10000,
       creditRenewalInterval: CREDIT_RENEWAL_INTERVAL,
       actionExecutionInterval: ACTION_EXECUTION_INTERVAL,
     });

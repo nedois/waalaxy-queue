@@ -62,7 +62,7 @@ describe('UserRedisRepository', () => {
       await repository.save(user);
 
       const result = await repository.findOne(userId);
-      expect(result).toBe(user);
+      expect(result).toStrictEqual(user);
     });
 
     it('should return null if no user is found', async () => {
@@ -129,11 +129,11 @@ describe('UserRedisRepository', () => {
         username: 'testuser',
         lockedQueueAt: new Date('2021-01-01T00:00:00Z'),
         lastActionExecutedAt: null,
-      } satisfies User);
+      });
       const result = UserRedisRepository.parse(data);
 
       expect(result).toBeInstanceOf(User);
-      expect(result.id).toBe(userId);
+      expect(result.id).toStrictEqual(userId);
       expect(result.username).toBe('testuser');
       expect(result.lockedQueueAt).toBeInstanceOf(Date);
       expect(result.lastActionExecutedAt).toBeNull();
