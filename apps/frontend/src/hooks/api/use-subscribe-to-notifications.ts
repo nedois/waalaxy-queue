@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useQueryClient } from 'react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Notification } from '../../api/entities';
 import { env } from '../../env';
 import { useUserAccount } from './use-user-account';
@@ -25,9 +25,9 @@ export function useSubscribeToNotifications(options?: UseSubscribeToNotification
     const eventSource = new EventSource(`${env.VITE_API_URL}/notifications/subscribe?token=${user.id}`);
 
     eventSource.onmessage = (event) => {
-      queryClient.invalidateQueries(['queue']);
-      queryClient.invalidateQueries(['actions']);
-      queryClient.invalidateQueries(['credits']);
+      queryClient.invalidateQueries({ queryKey: ['queue'] });
+      queryClient.invalidateQueries({ queryKey: ['actions'] });
+      queryClient.invalidateQueries({ queryKey: ['credits'] });
 
       const notification = Notification.parse(JSON.parse(event.data));
       onNotificationRef.current?.(notification);

@@ -1,6 +1,9 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getUserQueue } from '../../api';
 
 export function useUserQueue() {
-  return useQuery(['queue'], () => getUserQueue());
+  return useQuery({
+    queryKey: ['queue'],
+    queryFn: getUserQueue,
+  });
 }

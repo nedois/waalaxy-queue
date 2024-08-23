@@ -1,6 +1,9 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getUserActions } from '../../api';
 
 export function useUserActions() {
-  return useQuery(['actions'], () => getUserActions());
+  return useQuery({
+    queryKey: ['actions'],
+    queryFn: getUserActions,
+  });
 }
