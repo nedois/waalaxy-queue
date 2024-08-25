@@ -11,7 +11,7 @@ export type UseCountdownReturn = ReturnType<typeof useCountdown>;
  * Reference based countdown hook that avoid rerenders
  */
 export function useCountdown({ startsAt }: UseCountdownOptions) {
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const textContentRef = useRef<HTMLSpanElement | null>(null);
   const remainingTimeRef = useRef(startsAt);
 
