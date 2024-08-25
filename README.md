@@ -89,6 +89,8 @@ nx start frontend
 
 ```bash
 nx test backend
+nx test domain
+nx test infra
 ```
 
 ### Architecture
