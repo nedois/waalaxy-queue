@@ -116,10 +116,31 @@ export class QueueProcessor {
     const nextAction = actions.find((action) => {
       const actionCredit = creditsMap.get(action.name);
       assert(actionCredit, new EntityNotFoundException(Credit, action.name));
-      return actionCredit.amount > 0 && action.status === 'PENDING';
+      const hasEnoughCredits = actionCredit.amount > 0;
+      const isStale = this.isActionStale(action);
+      return hasEnoughCredits && isStale;
     });
 
     return nextAction ?? null;
+  }
+
+  /**
+   * Determines if an action is stale based on the elapsed time since it was
+   * last executed. An action is considered stale if it has not been completed
+   * and the elapsed time is greater than the QUEUE_LOCK_THRESHOLD.
+   * PENDING actions are considered stale by default.
+   */
+  private isActionStale(action: Action) {
+    if (action.status === 'COMPLETED') {
+      return false;
+    }
+
+    if (!action.runnedAt) {
+      return true;
+    }
+
+    const elapsedTime = new Date().getTime() - action.runnedAt.getTime();
+    return elapsedTime > this.QUEUE_LOCK_THRESHOLD;
   }
 
   private async notifyActionCompletion(action: Action) {
