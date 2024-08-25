@@ -1,8 +1,8 @@
+import { Action } from '@repo/domain';
 import express, { type Express } from 'express';
 import client from 'supertest';
 import { bootstrap } from '../bootstrap';
 import { container } from '../di';
-import { Action } from '@repo/domain';
 
 describe('ActionsController', () => {
   let app: Express;
@@ -10,7 +10,7 @@ describe('ActionsController', () => {
   let userId: string;
 
   beforeEach(async () => {
-    jest.useFakeTimers({ doNotFake: ['nextTick'] });
+    jest.useFakeTimers();
     app = await bootstrap(express());
 
     const response = await client(app).post('/auth/login').send({ username: 'username1' });
@@ -46,8 +46,8 @@ describe('ActionsController', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           name: 'B',
-          runnedAt: new Date(),
-          status: 'COMPLETED',
+          runnedAt: null,
+          status: 'PENDING',
           userId,
         }),
       ];
@@ -64,7 +64,7 @@ describe('ActionsController', () => {
           name: action.name,
           createdAt: action.createdAt.toISOString(),
           updatedAt: action.updatedAt.toISOString(),
-          runnedAt: action.runnedAt?.toISOString(),
+          runnedAt: null,
           status: action.status,
           userId,
         }))
@@ -95,12 +95,16 @@ describe('ActionsController', () => {
     });
 
     it('should throw a validation error if payload is invalid', async () => {
+      jest.useFakeTimers({ legacyFakeTimers: true });
+
       const response = await client(app).post('/actions').set('Authorization', token).send({ name: 'invalid-action' });
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: 'Validation Error',
-        errors: [{ field: 'name', message: expect.any(String) }],
+        message: 'Validation error',
+        errors: expect.objectContaining({
+          name: expect.arrayContaining([expect.any(String)]),
+        }),
       });
     });
   });

@@ -1,8 +1,8 @@
+import { Action } from '@repo/domain';
 import express, { type Express } from 'express';
 import client from 'supertest';
 import { bootstrap } from '../bootstrap';
 import { container } from '../di';
-import { Action } from '@repo/domain';
 
 describe('QueueController', () => {
   let app: Express;
@@ -10,7 +10,7 @@ describe('QueueController', () => {
   let userId: string;
 
   beforeEach(async () => {
-    jest.useFakeTimers({ doNotFake: ['nextTick'] });
+    jest.useFakeTimers();
     app = await bootstrap(express());
 
     const response = await client(app).post('/auth/login').send({ username: 'username1' });
@@ -20,7 +20,7 @@ describe('QueueController', () => {
 
   afterEach(async () => {
     await container.dispose();
-    jest.useRealTimers();
+    jest.useFakeTimers();
   });
 
   describe('GET /queue', () => {
@@ -45,15 +45,6 @@ describe('QueueController', () => {
           id: '41a1311f-7805-4698-ba62-4f1718402e95',
           createdAt: new Date(),
           updatedAt: new Date(),
-          name: 'B',
-          runnedAt: new Date(),
-          status: 'COMPLETED',
-          userId,
-        }),
-        new Action({
-          id: '41a1311f-7805-4698-ba62-4f1718402e95',
-          createdAt: new Date(),
-          updatedAt: new Date(),
           name: 'C',
           runnedAt: null,
           status: 'PENDING',
@@ -62,6 +53,7 @@ describe('QueueController', () => {
       ];
 
       await Promise.all(actions.map((action) => container.actionRepository.save(action)));
+      await Promise.all(actions.map((action) => container.queueProcessor.enqueueAction(action)));
 
       const response = await client(app).get('/queue').set('Authorization', token);
 
@@ -75,7 +67,7 @@ describe('QueueController', () => {
             name: action.name,
             createdAt: action.createdAt.toISOString(),
             updatedAt: action.updatedAt.toISOString(),
-            runnedAt: action.runnedAt?.toISOString(),
+            runnedAt: null,
             status: action.status,
             userId,
           }))

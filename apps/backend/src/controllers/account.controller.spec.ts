@@ -7,13 +7,11 @@ describe('AccountController', () => {
   let app: Express;
 
   beforeEach(async () => {
-    jest.useFakeTimers({ doNotFake: ['nextTick'] });
     app = await bootstrap(express());
   });
 
   afterEach(async () => {
     await container.dispose();
-    jest.useRealTimers();
   });
 
   it('GET /account should return the user info if authenticated', async () => {

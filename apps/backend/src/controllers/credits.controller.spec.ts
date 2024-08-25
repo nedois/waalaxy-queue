@@ -6,18 +6,18 @@ import { container } from '../di';
 describe('CreditsController', () => {
   let app: Express;
   let token: string;
+  let userId: string;
 
   beforeEach(async () => {
-    jest.useFakeTimers({ doNotFake: ['nextTick'] });
     app = await bootstrap(express());
 
     const response = await client(app).post('/auth/login').send({ username: 'username1' });
     token = `Bearer ${response.body.token}`;
+    userId = response.body.token;
   });
 
   afterEach(async () => {
     await container.dispose();
-    jest.useRealTimers();
   });
 
   describe('GET /credits', () => {
@@ -38,6 +38,7 @@ describe('CreditsController', () => {
           id: expect.any(String),
           actionName: expect.any(String),
           amount: expect.any(Number),
+          userId,
         })
       );
     });

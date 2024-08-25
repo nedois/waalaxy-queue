@@ -106,3 +106,4 @@ Separating the infra from the domain in packages allows us to use the Nx boundar
 - Implement a real authentication mechanism.
 - Consider implementing a worker based system for processing the queue to handle large number of users.
 - Implement or use a better DI management system like Inversify.
+- Implement entities factories to improve testability.

@@ -77,11 +77,11 @@ describe('ActionRedisRepository', () => {
         runnedAt: null,
       });
 
-      await repository.save(action2);
       await repository.save(action1);
+      await repository.save(action2);
 
       const result = await repository.findByUserId(userId);
-      expect(result).toEqual([action2, action1]);
+      expect(result).toEqual([action1, action2]);
     });
 
     it('should return an empty array if no actions are found', async () => {

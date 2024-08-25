@@ -1,8 +1,8 @@
+import { User } from '@repo/domain';
 import express, { type Express } from 'express';
 import client from 'supertest';
-import { bootstrap } from '../bootstrap';
-import { User } from '@repo/domain';
 import { container } from '../di';
+import { authMiddleware } from './auth.middleware';
 
 describe('AuthMiddleware', () => {
   let app: Express;
@@ -20,9 +20,10 @@ describe('AuthMiddleware', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
 
-    app = await bootstrap(express());
+    app = express();
+    app.use(authMiddleware);
 
-    await container.userRepository.save(user);
+    container.userRepository.findOne = jest.fn().mockResolvedValue(user);
 
     app.get('/protected', (request, response) => {
       response.status(200).send({ message: 'Authenticated', userId: request.user.id });
